@@ -200,7 +200,7 @@ def main():
         return 1
 
     first = ranked[0]
-    rest = ranked[1:]
+    queued = ranked[1:]
     print("KEEP/PUBLISH NOW", first["id"], first["slug"], first.get("title", {}).get("rendered"))
 
     now = datetime.now(TZ).replace(minute=0, second=0, microsecond=0)
@@ -213,7 +213,7 @@ def main():
 
     start = now + timedelta(hours=1)
     jobs = []
-    for i, post in enumerate(rest):
+    for i, post in enumerate(queued):
         when = start + timedelta(hours=i)
         jobs.append((post["id"], post["slug"], when))
 
