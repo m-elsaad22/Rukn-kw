@@ -553,7 +553,47 @@ def deploy_main_snippet():
         print("stored_len", len(data.get("stored_code") or ""))
     else:
         print(data)
+    activate_wpcode_runtime(code_src)
     return data
+
+
+def activate_wpcode_runtime(code_src: str):
+    """WPCode executes option wpcode_snippets, not the draft CPT row.
+
+    Keep disable-comments plus the Kuwait SEO layer in the live everywhere slot.
+    """
+    import base64 as b64
+
+    comments = """add_action("admin_init", function () {
+    global $pagenow;
+    if ($pagenow === "edit-comments.php") {
+        wp_safe_redirect(admin_url());
+        exit;
+    }
+    remove_meta_box("dashboard_recent_comments", "dashboard", "normal");
+    foreach (get_post_types() as $post_type) {
+        if (post_type_supports($post_type, "comments")) {
+            remove_post_type_support($post_type, "comments");
+            remove_post_type_support($post_type, "trackbacks");
+        }
+    }
+});
+add_filter("comments_open", "__return_false", 20, 2);
+add_filter("pings_open", "__return_false", 20, 2);
+add_filter("comments_array", "__return_empty_array", 10, 2);
+add_action("admin_menu", function () { remove_menu_page("edit-comments.php"); });
+add_action("init", function () {
+    if (is_admin_bar_showing()) {
+        remove_action("admin_bar_menu", "wp_admin_bar_comments_menu", 60);
+    }
+});
+"""
+    encoded = b64.b64encode((comments + "\n" + code_src).encode("utf-8")).decode("ascii")
+    php = 'eval(base64_decode("' + encoded + '"));'
+    cmd = "option patch update wpcode_snippets everywhere 0 code '" + php + "'"
+    res = cli(cmd, confirm=True)
+    print("wpcode_snippets runtime", res.get("exit_code"), (res.get("stdout") or res.get("stderr") or "")[:240])
+    cli("plugin activate insert-headers-and-footers", confirm=True)
 
 
 def main():

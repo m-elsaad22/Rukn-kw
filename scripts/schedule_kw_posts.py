@@ -13,6 +13,8 @@ import time
 import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
+# H1 tags are converted on render by the Kuwait SEO snippet.
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
@@ -180,20 +182,6 @@ def set_future(pid: int, when: datetime):
         body={"status": "future", "date": local, "date_gmt": when.astimezone(ZoneInfo("UTC")).strftime("%Y-%m-%dT%H:%M:%S")},
     )
     status = data.get("status") if isinstance(data, dict) else data
-    if code in (200, 201):
-        for old, new in (("<h1>", "<h2>"), ("</h1>", "</h2>")):
-            rest(
-                "/wpvibe/v1/content/edit",
-                method="POST",
-                body={
-                    "target_type": "post",
-                    "post_id": pid,
-                    "field": "post_content",
-                    "old_content": old,
-                    "new_content": new,
-                    "replace_all": True,
-                },
-            )
     return pid, code, status, data.get("date") if isinstance(data, dict) else ""
 
 

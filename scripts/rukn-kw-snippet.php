@@ -120,6 +120,7 @@ function rukn_kw_seo_context()
     );
 }
 
+add_action('init', 'rukn_kw_intercept_crawl_files', 0);
 add_action('template_redirect', 'rukn_kw_intercept_crawl_files', 0);
 function rukn_kw_intercept_crawl_files()
 {
@@ -157,6 +158,7 @@ function rukn_kw_intercept_crawl_files()
 
 function rukn_kw_xml_header()
 {
+    status_header(200);
     nocache_headers();
     header('Content-Type: application/xml; charset=UTF-8');
     echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
@@ -164,6 +166,7 @@ function rukn_kw_xml_header()
 
 function rukn_kw_output_robots()
 {
+    status_header(200);
     nocache_headers();
     header('Content-Type: text/plain; charset=UTF-8');
     echo "User-agent: *\n";
