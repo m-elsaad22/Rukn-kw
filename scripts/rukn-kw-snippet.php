@@ -20,7 +20,7 @@ if (!defined('RUKN_KW_HOME')) {
 function rukn_kw_is_en_request()
 {
     $path = (string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
-    return (bool) preg_match('#/kw/english(/|$)#', $path);
+    return (bool) preg_match('#/kw/en(/|$)#', $path);
 }
 
 function rukn_kw_path()
@@ -34,14 +34,14 @@ function rukn_kw_path()
 function rukn_kw_hreflang_pair()
 {
     $pairs = array(
-        '/kw/' => '/kw/english/',
-        '/kw/about-us/' => '/kw/english/about-us/',
-        '/kw/contact-us/' => '/kw/english/contact-us/',
-        '/kw/privacy-policy/' => '/kw/english/privacy-policy/',
-        '/kw/english/' => '/kw/',
-        '/kw/english/about-us/' => '/kw/about-us/',
-        '/kw/english/contact-us/' => '/kw/contact-us/',
-        '/kw/english/privacy-policy/' => '/kw/privacy-policy/',
+        '/kw/' => '/kw/en/',
+        '/kw/about-us/' => '/kw/en/about-us/',
+        '/kw/contact-us/' => '/kw/en/contact-us/',
+        '/kw/privacy-policy/' => '/kw/en/privacy-policy/',
+        '/kw/en/' => '/kw/',
+        '/kw/en/about-us/' => '/kw/about-us/',
+        '/kw/en/contact-us/' => '/kw/contact-us/',
+        '/kw/en/privacy-policy/' => '/kw/privacy-policy/',
     );
     $path = rukn_kw_path();
     if (isset($pairs[$path])) {
@@ -53,6 +53,49 @@ function rukn_kw_hreflang_pair()
 function rukn_kw_abs($path)
 {
     return 'https://rukn-eltatawer.com' . $path;
+}
+
+add_filter('rewrite_rules_array', 'rukn_kw_drop_theme_en_rules', 99);
+function rukn_kw_drop_theme_en_rules($rules)
+{
+    if (!is_array($rules)) {
+        return $rules;
+    }
+    foreach ($rules as $pattern => $query) {
+        if (strpos((string) $query, 'kayan_lang=en') !== false) {
+            unset($rules[$pattern]);
+        }
+    }
+    return $rules;
+}
+
+add_action('parse_request', 'rukn_kw_force_en_pagename', 99);
+function rukn_kw_force_en_pagename($wp)
+{
+    if (is_admin()) {
+        return;
+    }
+    $path = (string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
+    if (!preg_match('#^/kw/en(/|$)#', $path)) {
+        return;
+    }
+    $rel = trim((string) preg_replace('#^/kw/en/?#', '', $path), '/');
+    $wp->query_vars = array(
+        'pagename' => $rel === '' ? 'en' : 'en/' . $rel,
+    );
+}
+
+add_filter('request', 'rukn_kw_force_en_request', 99);
+function rukn_kw_force_en_request($qv)
+{
+    $path = (string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
+    if (!preg_match('#^/kw/en(/|$)#', $path)) {
+        return $qv;
+    }
+    $rel = trim((string) preg_replace('#^/kw/en/?#', '', $path), '/');
+    return array(
+        'pagename' => $rel === '' ? 'en' : 'en/' . $rel,
+    );
 }
 
 function rukn_kw_seo_context()
@@ -128,14 +171,10 @@ function rukn_kw_intercept_crawl_files()
         return;
     }
     $path = (string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
-    // Theme treats /kw/en/ as a language prefix and serves the Arabic home.
-    if (preg_match('#^/kw/en(?:/|$)#', rtrim($path, '/')) && strpos($path, '/english') === false) {
-        $rest = '';
-        if (preg_match('#^/kw/en/(.*)$#', rtrim($path, '/'), $m)) {
-            $rest = trim($m[1], '/');
-        }
-        $dest = home_url('/english/' . ($rest !== '' ? $rest . '/' : ''));
-        wp_redirect($dest, 301);
+    // Old English hub slug. Keep a 301 so existing links do not 404.
+    if (preg_match('#^/kw/english(/|$)#', $path)) {
+        $dest = preg_replace('#/kw/english#', '/kw/en', $path, 1);
+        wp_redirect(rukn_kw_abs($dest), 301);
         exit;
     }
     $path = rtrim($path, '/');
@@ -248,7 +287,7 @@ function rukn_kw_output_page_sitemap()
     rukn_kw_urlset_open();
     rukn_kw_url_row(rukn_kw_abs('/kw/'), gmdate('c'), 'daily', '1.0', array(
         'ar-KW' => rukn_kw_abs('/kw/'),
-        'en-KW' => rukn_kw_abs('/kw/english/'),
+        'en-KW' => rukn_kw_abs('/kw/en/'),
         'x-default' => rukn_kw_abs('/kw/'),
     ));
     if (is_array($rows)) {
@@ -257,13 +296,13 @@ function rukn_kw_output_page_sitemap()
             if (!$permalink) {
                 continue;
             }
-            $is_en = (strpos($permalink, '/kw/english') !== false);
+            $is_en = (bool) preg_match('#/kw/en(/|$)#', $permalink);
             $alts = array();
             $map = array(
-                'about-us' => array(rukn_kw_abs('/kw/about-us/'), rukn_kw_abs('/kw/english/about-us/')),
-                'contact-us' => array(rukn_kw_abs('/kw/contact-us/'), rukn_kw_abs('/kw/english/contact-us/')),
-                'privacy-policy' => array(rukn_kw_abs('/kw/privacy-policy/'), rukn_kw_abs('/kw/english/privacy-policy/')),
-                'english' => array(rukn_kw_abs('/kw/'), rukn_kw_abs('/kw/english/')),
+                'about-us' => array(rukn_kw_abs('/kw/about-us/'), rukn_kw_abs('/kw/en/about-us/')),
+                'contact-us' => array(rukn_kw_abs('/kw/contact-us/'), rukn_kw_abs('/kw/en/contact-us/')),
+                'privacy-policy' => array(rukn_kw_abs('/kw/privacy-policy/'), rukn_kw_abs('/kw/en/privacy-policy/')),
+                'en' => array(rukn_kw_abs('/kw/'), rukn_kw_abs('/kw/en/')),
             );
             if (isset($map[$row->post_name])) {
                 $alts = array(
@@ -351,6 +390,8 @@ function rukn_kw_filter_html($html, $ctx)
         $html
     );
 
+    $html = str_replace('/kw/english/', '/kw/en/', $html);
+
     $html = preg_replace('#Thank you for reading this post, don\'t forget to subscribe!#i', '', $html);
     $html = preg_replace('#href="tel:"#', 'href="tel:' . $phone . '"', $html);
     $html = preg_replace('#href="https://wa\.me/"#', 'href="' . $wa_href . '"', $html);
@@ -417,8 +458,8 @@ function rukn_kw_filter_html($html, $ctx)
 
     list($self, $alt) = rukn_kw_hreflang_pair();
     if ($alt) {
-        $ar = (strpos($self, '/kw/english') === 0) ? $alt : $self;
-        $en = (strpos($self, '/kw/english') === 0) ? $self : $alt;
+        $ar = (strpos($self, '/kw/en/') === 0) ? $alt : $self;
+        $en = (strpos($self, '/kw/en/') === 0) ? $self : $alt;
         $meta_block .= '<link rel="alternate" hreflang="ar-KW" href="' . esc_url(rukn_kw_abs($ar)) . '" />' . "\n";
         $meta_block .= '<link rel="alternate" hreflang="en-KW" href="' . esc_url(rukn_kw_abs($en)) . '" />' . "\n";
         $meta_block .= '<link rel="alternate" hreflang="x-default" href="' . esc_url(rukn_kw_abs($ar)) . '" />' . "\n";
@@ -449,17 +490,17 @@ function rukn_kw_filter_html($html, $ctx)
 
     if ($ctx['en']) {
         $en_nav = '<nav class="menu">'
-            . '<a href="' . esc_url(rukn_kw_abs('/kw/english/')) . '">Home</a>'
-            . '<a href="' . esc_url(rukn_kw_abs('/kw/english/services/')) . '">Services</a>'
-            . '<a href="' . esc_url(rukn_kw_abs('/kw/english/about-us/')) . '">About</a>'
-            . '<a href="' . esc_url(rukn_kw_abs('/kw/english/contact-us/')) . '">Contact</a>'
+            . '<a href="' . esc_url(rukn_kw_abs('/kw/en/')) . '">Home</a>'
+            . '<a href="' . esc_url(rukn_kw_abs('/kw/en/services/')) . '">Services</a>'
+            . '<a href="' . esc_url(rukn_kw_abs('/kw/en/about-us/')) . '">About</a>'
+            . '<a href="' . esc_url(rukn_kw_abs('/kw/en/contact-us/')) . '">Contact</a>'
             . '<a href="' . esc_url(rukn_kw_abs('/kw/')) . '">العربية</a>'
             . '</nav>';
         $html = preg_replace('#<nav class="menu">.*?</nav>#is', $en_nav, $html, 1);
     } else {
         $html = preg_replace(
             '#(<nav class="menu">)(.*?)(</nav>)#is',
-            '$1$2<a href="' . esc_url(rukn_kw_abs('/kw/english/')) . '">English</a>$3',
+            '$1$2<a href="' . esc_url(rukn_kw_abs('/kw/en/')) . '">English</a>$3',
             $html,
             1
         );

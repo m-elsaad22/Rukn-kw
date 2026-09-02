@@ -293,7 +293,7 @@ def build_pages():
     pages = []
     pages.append(
         {
-            "slug": "english",
+            "slug": "en",
             "parent": 0,
             "title": "Home Services in Kuwait",
             "rank_title": "Home Services Company in Kuwait | Rukn El Tatawer",
@@ -313,12 +313,12 @@ def build_pages():
                     (
                         "Governorates we cover",
                         [
-                            '<a href="/kw/english/kuwait-city/">Kuwait City (Capital)</a>',
-                            '<a href="/kw/english/hawalli/">Hawalli</a>',
-                            '<a href="/kw/english/farwaniya/">Farwaniya</a>',
-                            '<a href="/kw/english/ahmadi/">Ahmadi</a>',
-                            '<a href="/kw/english/jahra/">Jahra</a>',
-                            '<a href="/kw/english/mubarak-al-kabeer/">Mubarak Al-Kabeer</a>',
+                            '<a href="/kw/en/kuwait-city/">Kuwait City (Capital)</a>',
+                            '<a href="/kw/en/hawalli/">Hawalli</a>',
+                            '<a href="/kw/en/farwaniya/">Farwaniya</a>',
+                            '<a href="/kw/en/ahmadi/">Ahmadi</a>',
+                            '<a href="/kw/en/jahra/">Jahra</a>',
+                            '<a href="/kw/en/mubarak-al-kabeer/">Mubarak Al-Kabeer</a>',
                         ],
                     ),
                     (
@@ -332,7 +332,7 @@ def build_pages():
     pages.append(
         {
             "slug": "about-us",
-            "parent_slug": "english",
+            "parent_slug": "en",
             "title": "About Rukn El Tatawer Kuwait",
             "rank_title": "About Us | Rukn El Tatawer Kuwait Home Services",
             "rank_desc": "Who we are in Kuwait: one crew for leak detection, insulation, AC, plumbing, cleaning and pest control, with written quotes after on-site diagnosis.",
@@ -359,7 +359,7 @@ def build_pages():
     pages.append(
         {
             "slug": "contact-us",
-            "parent_slug": "english",
+            "parent_slug": "en",
             "title": "Contact Rukn El Tatawer Kuwait",
             "rank_title": "Contact Us | Rukn El Tatawer Kuwait",
             "rank_desc": f"Call or WhatsApp {PHONE_DISP} for home services in Kuwait. Email {EMAIL}. We cover all six governorates, 24/7 coordination.",
@@ -388,13 +388,13 @@ def build_pages():
     pages.append(
         {
             "slug": "privacy-policy",
-            "parent_slug": "english",
+            "parent_slug": "en",
             "title": "Privacy Policy",
             "rank_title": "Privacy Policy | Rukn El Tatawer Kuwait",
             "rank_desc": "How Rukn El Tatawer Kuwait handles contact details, job photos and messages sent through this website or WhatsApp.",
             "content": page_html(
                 "Privacy policy — Kuwait website",
-                "This policy applies to rukn-eltatawer.com/kw/ and English pages under /kw/english/. We collect only what is needed to schedule and deliver a home-service job in Kuwait.",
+                "This policy applies to rukn-eltatawer.com/kw/ and English pages under /kw/en/. We collect only what is needed to schedule and deliver a home-service job in Kuwait.",
                 [
                     (
                         "What we collect",
@@ -415,7 +415,7 @@ def build_pages():
     pages.append(
         {
             "slug": "services",
-            "parent_slug": "english",
+            "parent_slug": "en",
             "title": "Home Services in Kuwait",
             "rank_title": "All Home Services in Kuwait | Rukn El Tatawer",
             "rank_desc": "16 home services in Kuwait: leaks, insulation, AC, plumbing, cleaning, pest control, gardens, pools, painting and interiors. Written KWD quotes after inspection.",
@@ -425,7 +425,7 @@ def build_pages():
                 [
                     (
                         "Service list",
-                        [f'<a href="/kw/english/services/{s[0]}/">{s[1]}</a>' for s in SERVICES],
+                        [f'<a href="/kw/en/services/{s[0]}/">{s[1]}</a>' for s in SERVICES],
                     ),
                 ],
             ),
@@ -446,7 +446,7 @@ def build_pages():
         pages.append(
             {
                 "slug": slug,
-                "parent_slug": "english",
+                "parent_slug": "en",
                 "title": title,
                 "rank_title": f"{title} | Rukn El Tatawer",
                 "rank_desc": lede[:160],
@@ -457,7 +457,7 @@ def build_pages():
                         ("Local conditions", extra),
                         (
                             "Services available here",
-                            'See the full list on <a href="/kw/english/services/">English services</a> or browse the Arabic city pages for neighbourhood-level guides.',
+                            'See the full list on <a href="/kw/en/services/">English services</a> or browse the Arabic city pages for neighbourhood-level guides.',
                         ),
                     ],
                 ),
@@ -617,7 +617,7 @@ def main():
 </ul>
 <h3>نطاق الخدمة</h3>
 <p>مناخ الكويت (حرارة الصيف، رطوبة الساحل، خزانات الأسطح) يختلف عن أي سوق آخر. مواصفات العزل والتكييف والمواد تُختار لهذا الواقع، لا بنسخ عقد من دولة أخرى.</p>
-<p>English: <a href="/kw/english/about-us/">About Rukn El Tatawer in Kuwait</a>.</p>
+<p>English: <a href="/kw/en/about-us/">About Rukn El Tatawer in Kuwait</a>.</p>
 </section>
 """
     for pid in (1279, 1280, 1281):
@@ -651,7 +651,7 @@ def main():
 
     print("=== menu English link ===")
     try:
-        res = cli("menu item add-custom 40 English https://rukn-eltatawer.com/kw/english/", confirm=True)
+        res = cli("menu item add-custom 40 English https://rukn-eltatawer.com/kw/en/", confirm=True)
         print("menu", res.get("exit_code"), (res.get("stdout") or res.get("stderr") or "")[:300])
     except Exception as e:
         print("menu fail", e)
