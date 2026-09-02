@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Publish the highest-search Kuwait post now; schedule the rest hourly.
+"""Publish the highest-search Kuwait post now; schedule the rest every 10 minutes.
 
 Priority = service search demand (Kuwait) + governorate population/intent.
-Already-published posts are moved to `future` so they go live one per hour.
+Posts already live stay published. Remaining future/draft posts are re-queued.
 """
 from __future__ import annotations
 
@@ -20,6 +20,8 @@ sys.path.insert(0, "/workspace/scripts")
 from wp_kw_client import BASE, TOKEN
 
 TZ = ZoneInfo("Asia/Kuwait")
+INTERVAL = timedelta(minutes=10)
+KEEP_ALREADY_PUBLISHED = True
 
 # Higher = published sooner. Based on typical Kuwait home-service search intent.
 SERVICE_SCORE = {
@@ -177,7 +179,22 @@ def set_future(pid: int, when: datetime):
         method="POST",
         body={"status": "future", "date": local, "date_gmt": when.astimezone(ZoneInfo("UTC")).strftime("%Y-%m-%dT%H:%M:%S")},
     )
-    return pid, code, data.get("status") if isinstance(data, dict) else data, data.get("date") if isinstance(data, dict) else ""
+    status = data.get("status") if isinstance(data, dict) else data
+    if code in (200, 201):
+        for old, new in (("<h1>", "<h2>"), ("</h1>", "</h2>")):
+            rest(
+                "/wpvibe/v1/content/edit",
+                method="POST",
+                body={
+                    "target_type": "post",
+                    "post_id": pid,
+                    "field": "post_content",
+                    "old_content": old,
+                    "new_content": new,
+                    "replace_all": True,
+                },
+            )
+    return pid, code, status, data.get("date") if isinstance(data, dict) else ""
 
 
 def main():
@@ -187,37 +204,56 @@ def main():
 
     published = fetch_all("publish")
     drafts = []
+    future = []
     try:
         drafts = fetch_all("draft")
     except Exception as e:
         print("drafts fetch", e)
+    try:
+        future = fetch_all("future")
+    except Exception as e:
+        print("future fetch", e)
 
-    pool = published + drafts
-    print(f"publish={len(published)} draft={len(drafts)}")
-    ranked = sorted(pool, key=lambda p: score_post(p.get("slug") or ""))
-    if not ranked:
-        print("no posts")
-        return 1
+    print(f"publish={len(published)} draft={len(drafts)} future={len(future)}")
 
-    first = ranked[0]
-    queued = ranked[1:]
-    print("KEEP/PUBLISH NOW", first["id"], first["slug"], first.get("title", {}).get("rendered"))
+    if KEEP_ALREADY_PUBLISHED and published:
+        live = sorted(published, key=lambda p: score_post(p.get("slug") or ""))
+        first = live[0]
+        queued = drafts + future
+        print("KEEP LIVE", [(p["id"], p["slug"]) for p in live])
+    else:
+        pool = published + drafts + future
+        ranked = sorted(pool, key=lambda p: score_post(p.get("slug") or ""))
+        if not ranked:
+            print("no posts")
+            return 1
+        first = ranked[0]
+        queued = ranked[1:]
+        print("KEEP/PUBLISH NOW", first["id"], first["slug"], first.get("title", {}).get("rendered"))
+        now_pub = datetime.now(TZ).replace(second=0, microsecond=0)
+        code, data, _ = rest(
+            f"/wp/v2/posts/{first['id']}",
+            method="POST",
+            body={"status": "publish", "date": now_pub.strftime("%Y-%m-%dT%H:%M:%S")},
+        )
+        print("first publish", code, data.get("status") if isinstance(data, dict) else data)
 
-    now = datetime.now(TZ).replace(minute=0, second=0, microsecond=0)
-    code, data, _ = rest(
-        f"/wp/v2/posts/{first['id']}",
-        method="POST",
-        body={"status": "publish", "date": now.strftime("%Y-%m-%dT%H:%M:%S")},
-    )
-    print("first publish", code, data.get("status") if isinstance(data, dict) else data)
+    queued = sorted(queued, key=lambda p: score_post(p.get("slug") or ""))
+    now = datetime.now(TZ).replace(second=0, microsecond=0)
+    # next 10-minute boundary at least 10 minutes from now
+    extra = 10 - (now.minute % 10)
+    if extra == 10:
+        extra = 0
+    start = now + timedelta(minutes=extra) + INTERVAL
+    if start <= now:
+        start = now + INTERVAL
 
-    start = now + timedelta(hours=1)
     jobs = []
     for i, post in enumerate(queued):
-        when = start + timedelta(hours=i)
+        when = start + INTERVAL * i
         jobs.append((post["id"], post["slug"], when))
 
-    print(f"scheduling {len(jobs)} posts hourly from {start.isoformat()} to {jobs[-1][2].isoformat() if jobs else '-'}")
+    print(f"scheduling {len(jobs)} posts every {int(INTERVAL.total_seconds()//60)} min from {start.isoformat()} to {jobs[-1][2].isoformat() if jobs else '-'}")
 
     ok = fail = 0
     with ThreadPoolExecutor(max_workers=6) as ex:
