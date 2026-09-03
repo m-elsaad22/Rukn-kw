@@ -537,7 +537,7 @@ add_action('wp_head', function () {
         ),
         'areaServed' => array(
             array('@type' => 'AdministrativeArea', 'name' => $is_en ? 'Kuwait' : 'الكويت'),
-            array('@type' => 'AdministrativeArea', 'name' => $is_en ? 'Capital Governorate' : 'محافظة العاصمة'),
+            array('@type' => 'AdministrativeArea', 'name' => $is_en ? 'Kuwait City' : 'الكويت'),
             array('@type' => 'AdministrativeArea', 'name' => $is_en ? 'Hawalli Governorate' : 'محافظة حولي'),
             array('@type' => 'AdministrativeArea', 'name' => $is_en ? 'Farwaniya Governorate' : 'محافظة الفروانية'),
             array('@type' => 'AdministrativeArea', 'name' => $is_en ? 'Ahmadi Governorate' : 'محافظة الأحمدي'),
