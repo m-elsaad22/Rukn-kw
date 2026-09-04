@@ -43,7 +43,7 @@ def rest(route, method="GET", body=None, timeout=180):
         return e.code, parsed
 
 
-def db_query(sql: str, limit: int = 400) -> list[dict]:
+def db_query(sql: str, limit: int = 800) -> list[dict]:
     res = cli(f'db query "{sql}" --limit={limit}', confirm=False)
     try:
         data = json.loads(res.get("stdout") or "{}")
