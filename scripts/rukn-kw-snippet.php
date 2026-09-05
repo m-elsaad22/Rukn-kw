@@ -177,6 +177,11 @@ function rukn_kw_intercept_crawl_files()
         wp_redirect(rukn_kw_abs($dest), 301);
         exit;
     }
+    // Capital-governorate posts now use the searchable English slug "kuwait".
+    if (preg_match('#^/kw/([^/]+)-capital/?$#', $path, $m)) {
+        wp_redirect(rukn_kw_abs('/kw/' . $m[1] . '-kuwait/'), 301);
+        exit;
+    }
     $path = rtrim($path, '/');
     if (preg_match('#/kw/robots\.txt$#', $path)) {
         rukn_kw_output_robots();

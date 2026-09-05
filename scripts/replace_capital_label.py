@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Replace visible «محافظة العاصمة» with «الكويت» on the live Kuwait site.
 
-Slugs stay on *-capital. Taxonomy term name «العاصمة» is not renamed.
-WPVibe search-replace is 409-gated, so this uses REST + post meta update.
+Post slugs are renamed separately to *-kuwait. Taxonomy term name «العاصمة»
+is not renamed. WPVibe search-replace is 409-gated, so this uses REST.
 """
 from __future__ import annotations
 
