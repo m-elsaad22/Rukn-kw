@@ -32,14 +32,15 @@ def load_catalog():
     return posts, cat
 
 
-def load_progress():
-    if PROGRESS.exists():
-        return json.loads(PROGRESS.read_text())
+def load_progress(path: Path = None):
+    path = path or PROGRESS
+    if path.exists():
+        return json.loads(path.read_text())
     return {"done": [], "failed": []}
 
 
-def save_progress(p):
-    PROGRESS.write_text(json.dumps(p, ensure_ascii=False, indent=2))
+def save_progress(p, path: Path = None):
+    (path or PROGRESS).write_text(json.dumps(p, ensure_ascii=False, indent=2))
 
 
 def update_content(post_id: int, html: str, excerpt: str):
@@ -89,28 +90,34 @@ def apply_meta_batch(items: list):
     if isinstance(r, dict) and r.get("exit_code", 0) not in (0, None, "0"):
         raise RuntimeError(str(r)[:500])
     ping_php()
-    time.sleep(0.8)
     leftover = cli("option get rukn_kw_meta_apply")
     stdout = (leftover.get("stdout") or "").strip() if isinstance(leftover, dict) else ""
     if leftover.get("exit_code", 1) == 0 and stdout and stdout not in ("", "false"):
         ping_php()
-        time.sleep(0.6)
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--offset", type=int, default=0)
-    ap.add_argument("--batch-meta", type=int, default=2)
+    ap.add_argument("--batch-meta", type=int, default=4)
     ap.add_argument("--only-slug-prefix", default="")
     ap.add_argument("--redo-done", action="store_true")
     ap.add_argument("--min-words", type=int, default=1500)
+    ap.add_argument("--shard", type=int, default=0)
+    ap.add_argument("--shards", type=int, default=1)
+    ap.add_argument("--progress-file", default="")
+    ap.add_argument("--skip-meta", action="store_true")
+    ap.add_argument("--meta-only", action="store_true")
     args = ap.parse_args()
 
     posts, cat = load_catalog()
-    progress = load_progress()
+    progress_path = Path(args.progress_file) if args.progress_file else PROGRESS
+    progress = load_progress(progress_path)
     done = set() if args.redo_done else set(progress.get("done") or [])
     selected = posts[args.offset :]
+    if args.shards > 1:
+        selected = [p for i, p in enumerate(selected) if i % args.shards == args.shard]
     if args.only_slug_prefix:
         selected = [p for p in selected if p["post_name"].startswith(args.only_slug_prefix)]
     if args.limit:
@@ -126,34 +133,38 @@ def main():
             art = build(p, cat)
             if art["word_count_hint"] < args.min_words:
                 raise RuntimeError(f"short article {art['word_count_hint']}")
-            update_content(pid, art["html"], art["excerpt"])
-            pending_meta.append(
-                {
-                    "id": pid,
-                    "excerpt": art["excerpt"],
-                    "tags": art["tags"],
-                    "rank_math_title": art["rank_math_title"],
-                    "rank_math_description": art["rank_math_description"],
-                    "rank_math_focus_keyword": art["rank_math_focus_keyword"],
-                    "meta": art["meta"],
-                }
-            )
+            if not args.meta_only:
+                update_content(pid, art["html"], art["excerpt"])
+            if not args.skip_meta:
+                pending_meta.append(
+                    {
+                        "id": pid,
+                        "excerpt": art["excerpt"],
+                        "tags": art["tags"],
+                        "rank_math_title": art["rank_math_title"],
+                        "rank_math_description": art["rank_math_description"],
+                        "rank_math_focus_keyword": art["rank_math_focus_keyword"],
+                        "meta": art["meta"],
+                    }
+                )
             done.add(pid)
             progress["done"] = sorted(done)
             ok += 1
             print(f"OK {pid} {p['post_name']} words={art['word_count_hint']}", flush=True)
-            if len(pending_meta) >= args.batch_meta:
+            if pending_meta and len(pending_meta) >= args.batch_meta:
                 apply_meta_batch(pending_meta)
                 pending_meta = []
-                save_progress(progress)
+                save_progress(progress, progress_path)
+            elif args.skip_meta and ok % 5 == 0:
+                save_progress(progress, progress_path)
         except Exception as e:
             progress.setdefault("failed", []).append({"id": pid, "slug": p["post_name"], "err": str(e)[:300]})
-            save_progress(progress)
+            save_progress(progress, progress_path)
             print(f"FAIL {pid} {p['post_name']}: {e}", flush=True)
             time.sleep(0.4)
     if pending_meta:
         apply_meta_batch(pending_meta)
-    save_progress(progress)
+    save_progress(progress, progress_path)
     print(f"updated {ok} posts; done={len(done)} failed={len(progress.get('failed') or [])}")
 
 
