@@ -554,7 +554,9 @@ def _compose_sections(**k):
     noun = k["noun"]
     kw = k["kw"]
     icon = k["icon"]
-    sections = [ARTICLE_CSS, '<div class="rukn-wrap">']
+    # CSS is printed from WPCode snippet 3811 (wp_head). Do not put <style>
+    # in post_content — wpautop/kses turns it into a visible paragraph.
+    sections = ['<div class="rukn-wrap">']
     sections.append(
         '<p class="author-box">'
         '<i class="fa-solid fa-pen"></i> <strong>كتب هذا المقال:</strong> فريق المحتوى الفني في ركن التطور &nbsp;|&nbsp; '
