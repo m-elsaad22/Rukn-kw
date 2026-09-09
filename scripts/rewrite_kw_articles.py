@@ -5,8 +5,10 @@ from __future__ import annotations
 import argparse
 import base64
 import json
+import ssl
 import sys
 import time
+import urllib.request
 from collections import defaultdict
 from pathlib import Path
 
@@ -14,6 +16,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from kw_builder import build
 from kw_cities import parse_slug
 from wp_kw_client import rest, cli
+
+CTX = ssl.create_default_context()
+FRONT = "https://rukn-eltatawer.com/kw/index.php"
 
 ROOT = Path(__file__).resolve().parent
 CATALOG_PATH = ROOT / "kw_posts_catalog.json"
@@ -69,31 +74,36 @@ def _safe_b64(payload: dict) -> str:
             return b64
 
 
-def ping_php():
+def trigger_frontend_apply(post_id: int = 0):
+    """WPCode 'everywhere' does not run on REST. Search URLs are uncached and run PHP."""
+    url = f"{FRONT}?s=rukn{int(post_id)}x{int(time.time() * 1000)}"
+    req = urllib.request.Request(
+        url,
+        headers={"User-Agent": "Mozilla/5.0 RuknMeta/1.0", "Cache-Control": "no-cache"},
+    )
+    with urllib.request.urlopen(req, timeout=90, context=CTX) as r:
+        r.read(256)
     try:
-        rest("/wpvibe/v1/ping", timeout=60)
-        return True
+        cli("option update rukn_kw_meta_apply 0")
     except Exception:
-        try:
-            rest("/wp/v2/posts/31&_fields=id", timeout=60)
-            return True
-        except Exception:
-            return False
+        pass
 
 
 def apply_meta_batch(items: list):
+    """One post per option write — large batches time out before delete_option."""
     if not items:
         return
-    payload = {"items": items}
-    b64 = _safe_b64(payload)
-    r = cli(f"option update rukn_kw_meta_apply {b64}")
-    if isinstance(r, dict) and r.get("exit_code", 0) not in (0, None, "0"):
-        raise RuntimeError(str(r)[:500])
-    ping_php()
-    leftover = cli("option get rukn_kw_meta_apply")
-    stdout = (leftover.get("stdout") or "").strip() if isinstance(leftover, dict) else ""
-    if leftover.get("exit_code", 1) == 0 and stdout and stdout not in ("", "false"):
-        ping_php()
+    last_err = None
+    for item in items:
+        payload = {"items": [item]}
+        b64 = _safe_b64(payload)
+        r = cli(f"option update rukn_kw_meta_apply {b64}")
+        if isinstance(r, dict) and r.get("exit_code", 0) not in (0, None, "0"):
+            last_err = RuntimeError(str(r)[:500])
+            continue
+        trigger_frontend_apply(int(item.get("id") or 0))
+    if last_err:
+        raise last_err
 
 
 def main():
@@ -147,15 +157,19 @@ def main():
                         "meta": art["meta"],
                     }
                 )
-            done.add(pid)
-            progress["done"] = sorted(done)
+            if args.skip_meta:
+                done.add(pid)
             ok += 1
             print(f"OK {pid} {p['post_name']} words={art['word_count_hint']}", flush=True)
             if pending_meta and len(pending_meta) >= args.batch_meta:
                 apply_meta_batch(pending_meta)
+                for it in pending_meta:
+                    done.add(int(it["id"]))
                 pending_meta = []
+                progress["done"] = sorted(done)
                 save_progress(progress, progress_path)
             elif args.skip_meta and ok % 5 == 0:
+                progress["done"] = sorted(done)
                 save_progress(progress, progress_path)
         except Exception as e:
             progress.setdefault("failed", []).append({"id": pid, "slug": p["post_name"], "err": str(e)[:300]})
@@ -164,6 +178,10 @@ def main():
             time.sleep(0.4)
     if pending_meta:
         apply_meta_batch(pending_meta)
+        for it in pending_meta:
+            done.add(int(it["id"]))
+        pending_meta = []
+    progress["done"] = sorted(done)
     save_progress(progress, progress_path)
     print(f"updated {ok} posts; done={len(done)} failed={len(progress.get('failed') or [])}")
 

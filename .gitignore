@@ -3,3 +3,4 @@ __pycache__/
 rewrite_progress.json
 scripts/__pycache__/
 scripts/rewrite_progress.json
+scripts/rewrite_meta_progress.json
