@@ -8,10 +8,8 @@
     "user_login": "cursor",
     "user_id": 2,
     "display_name": "MAHMOUD ELSAȚD",
-    "email_known": "m@rukn-eltatawer.com",
-    "password_accepted": false,
-    "application_password_accepted": false,
-    "wpvibe": "1.16.5 present, writes require authenticated admin"
+    "application_password_accepted": true,
+    "applied_at": "2026-09-16"
   },
   "stack": {
     "wordpress": "7.1",
@@ -20,17 +18,17 @@
     "plugins_detected": ["Polylang", "Rank Math", "LiteSpeed", "WPVibe", "Kayan Track"]
   },
   "contact": {
-    "kayan_dni": { "phone": "", "wa_number": "" },
+    "kayan_dni": { "phone": "971586634710", "wa_number": "971586634710" },
     "published_phone": "+971586634710",
     "published_whatsapp": "971586634710",
     "email": "m@rukn-eltatawer.com",
-    "call_show": false,
-    "call_number_option_empty": true,
+    "call_show": true,
+    "call_number_option_empty": false,
     "kuwait_plus965_not_issued": true
   },
   "seo": {
-    "kw_robots_http": 404,
-    "kw_sitemap_http": 404,
+    "kw_robots_http": 302,
+    "kw_sitemap_http": 200,
     "timezone": "Asia/Kuwait",
     "page_on_front": 0,
     "page_for_posts": 1282,
@@ -40,8 +38,9 @@
   "i18n": {
     "languages": ["ar", "en"],
     "english_post_count": 0,
-    "english_home_slug_conflict": "en",
-    "en_prefix_collapses_to_arabic_home": true,
+    "english_home_slug": "english",
+    "english_home_url": "https://rukn-eltatawer.com/kw/english/",
+    "polylang_en_prefix_still_arabic": true,
     "hreflang_en_kw_target": "https://rukn-eltatawer.com/kw/english/"
   },
   "content": {
@@ -54,7 +53,7 @@
     "portfolio": 0,
     "media_items": 5,
     "featured_media_missing_sample": "500/500",
-    "service_categories_assigned": 0,
+    "service_categories_assigned": 1248,
     "cities_with_posts": ["capital", "hawalli", "farwaniya", "mubarak-al-kabeer", "al-ahmadi", "al-jahra"],
     "cities_empty": ["salmiya", "fintas"]
   },
