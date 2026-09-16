@@ -1,0 +1,71 @@
+{
+  "audited_at": "2026-09-16",
+  "requested_url": "https://www.rukn-eltawer.com/kw",
+  "live_url": "https://rukn-eltatawer.com/kw/",
+  "dns_note": "rukn-eltawer.com NXDOMAIN; correct host is rukn-eltatawer.com",
+  "auth": {
+    "user_exists": true,
+    "user_login": "cursor",
+    "user_id": 2,
+    "display_name": "MAHMOUD ELSAȚD",
+    "email_known": "m@rukn-eltatawer.com",
+    "password_accepted": false,
+    "application_password_accepted": false,
+    "wpvibe": "1.16.5 present, writes require authenticated admin"
+  },
+  "stack": {
+    "wordpress": "7.1",
+    "theme": "Kayan Theme 1.4.2",
+    "php": "8.3.33",
+    "plugins_detected": ["Polylang", "Rank Math", "LiteSpeed", "WPVibe", "Kayan Track"]
+  },
+  "contact": {
+    "kayan_dni": { "phone": "", "wa_number": "" },
+    "published_phone": "+971586634710",
+    "published_whatsapp": "971586634710",
+    "email": "m@rukn-eltatawer.com",
+    "call_show": false,
+    "call_number_option_empty": true,
+    "kuwait_plus965_not_issued": true
+  },
+  "seo": {
+    "kw_robots_http": 404,
+    "kw_sitemap_http": 404,
+    "timezone": "Asia/Kuwait",
+    "page_on_front": 0,
+    "page_for_posts": 1282,
+    "og_image": "https://www.rukn-eltatawer.com/wp-content/uploads/icon/setting.png",
+    "schema_telephone_country_mismatch": true
+  },
+  "i18n": {
+    "languages": ["ar", "en"],
+    "english_post_count": 0,
+    "english_home_slug_conflict": "en",
+    "en_prefix_collapses_to_arabic_home": true,
+    "hreflang_en_kw_target": "https://rukn-eltatawer.com/kw/english/"
+  },
+  "content": {
+    "posts_published": 1248,
+    "pages": 31,
+    "services_cpt": 16,
+    "reviews": 0,
+    "faqs": 0,
+    "pricing": 0,
+    "portfolio": 0,
+    "media_items": 5,
+    "featured_media_missing_sample": "500/500",
+    "service_categories_assigned": 0,
+    "cities_with_posts": ["capital", "hawalli", "farwaniya", "mubarak-al-kabeer", "al-ahmadi", "al-jahra"],
+    "cities_empty": ["salmiya", "fintas"]
+  },
+  "csv": {
+    "file": "rukn-eltatawer-kuwait-FULL.csv",
+    "rows": 1248,
+    "status": "draft",
+    "placeholders": {
+      "{PHONE_RUKN_KUWAIT}": 2496,
+      "{WHATSAPP_RUKN_KUWAIT}": 2496
+    },
+    "unique_titles": 1224
+  }
+}
