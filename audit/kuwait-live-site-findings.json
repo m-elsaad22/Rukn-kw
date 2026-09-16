@@ -1,13 +1,15 @@
 {
   "audited_at": "2026-09-16",
+  "audit_pass": "full-defects-catalog",
   "requested_url": "https://www.rukn-eltawer.com/kw",
   "live_url": "https://rukn-eltatawer.com/kw/",
   "dns_note": "rukn-eltawer.com NXDOMAIN; correct host is rukn-eltatawer.com",
+  "catalog": "audit/kuwait-full-defects.md",
   "auth": {
     "user_exists": true,
     "user_login": "cursor",
     "user_id": 2,
-    "display_name": "MAHMOUD ELSAȚD",
+    "display_name": "MAHMOUD ELSAAD",
     "application_password_accepted": true,
     "applied_at": "2026-09-16"
   },
@@ -15,7 +17,19 @@
     "wordpress": "7.1",
     "theme": "Kayan Theme 1.4.2",
     "php": "8.3.33",
-    "plugins_detected": ["Polylang", "Rank Math", "LiteSpeed", "WPVibe", "Kayan Track"]
+    "server": "LiteSpeed",
+    "plugins": [
+      "Classic Editor 1.7.0",
+      "Classic Widgets 0.3",
+      "Easy Table of Contents 2.0.87.1",
+      "LiteSpeed Cache 7.9.1",
+      "Polylang 3.8.9",
+      "Rank Math SEO 1.0.278",
+      "Rukn CSV Bulk Importer 2.0.0",
+      "WPCode Lite 2.3.9",
+      "WPVibe 1.16.5 (update 1.17.0 available)",
+      "Advanced Editor Tools 5.10.1"
+    ]
   },
   "contact": {
     "kayan_dni": { "phone": "971586634710", "wa_number": "971586634710" },
@@ -23,39 +37,97 @@
     "published_whatsapp": "971586634710",
     "email": "m@rukn-eltatawer.com",
     "call_show": true,
-    "call_number_option_empty": false,
-    "kuwait_plus965_not_issued": true
+    "kuwait_plus965_not_issued": true,
+    "contact_form_present": false,
+    "rukn_cs_default_wa_hardcoded_971": true
   },
   "seo": {
     "kw_robots_http": 302,
     "kw_sitemap_http": 200,
-    "timezone": "Asia/Kuwait",
+    "homepage_canonical": "https://rukn-eltatawer.com/kw/kw/",
+    "homepage_title_rendered": "ركن التطور الكويت",
+    "homepage_title_rankmath_unused": "ركن التطور الكويت | كشف تسربات، عزل، تكييف وصيانة في كل المحافظات",
+    "homepage_meta_description_rendered": "ركن التطور الكويت",
+    "show_on_front": "posts",
     "page_on_front": 0,
     "page_for_posts": 1282,
-    "og_image": "https://www.rukn-eltatawer.com/wp-content/uploads/icon/setting.png",
-    "schema_telephone_country_mismatch": true
+    "timezone": "Asia/Kuwait",
+    "og_image_default": "https://www.rukn-eltatawer.com/wp-content/uploads/icon/setting.png",
+    "og_locale_homepage": "ar_AR",
+    "og_locale_english_page": "ar_AR",
+    "og_locale_polylang_en_prefix": "en_US",
+    "knowledgegraph_type": "company",
+    "local_business_type": "Organization",
+    "knowledgegraph_name": "ركن التطور",
+    "localbusiness_jsonld_empty": true,
+    "hreflang_en_target": "https://rukn-eltatawer.com/kw/en/",
+    "hreflang_en_should_be": "https://rukn-eltatawer.com/kw/english/",
+    "soft_404_redirect_home": true,
+    "theme_404_file": "components/packs/@404/shape.php"
   },
   "i18n": {
     "languages": ["ar", "en"],
-    "english_post_count": 0,
+    "polylang_en_post_count": 0,
+    "english_manual_pages": 27,
     "english_home_slug": "english",
     "english_home_url": "https://rukn-eltatawer.com/kw/english/",
+    "english_html_lang": "ar",
+    "english_dir": "rtl",
     "polylang_en_prefix_still_arabic": true,
-    "hreflang_en_kw_target": "https://rukn-eltatawer.com/kw/english/"
+    "polylang_browser_redirect": true,
+    "polylang_en_locale": "en_US",
+    "polylang_en_flag": "us.png over http"
   },
+  "frontend": {
+    "desktop_nav_empty": true,
+    "menu_items_in_admin": 5,
+    "english_menu_url": "https://rukn-eltatawer.com/kw/en/",
+    "logo_mode": "font-awesome-icon-plus-text",
+    "uploaded_logo_unused": "https://rukn-eltatawer.com/kw/wp-content/uploads/2026/09/logo.webp",
+    "hash_links_homepage": 16,
+    "finder_label": "اختر الإمارة",
+    "footer_map": "Dubai,United+Arab+Emirates",
+    "stats_visible_zero": true,
+    "unreplaced_tokens": ["[[عدد المشاريع]]", "[[سنة التأسيس]]"],
+    "search_front_zero_results": true,
+    "blog_cards": 0,
+    "cpt_archive_h1_raw_slug": true
+  },
+  "theme_bugs": [
+    "missing WP templates: single.php page.php archive.php 404.php search.php",
+    "404 shape.php wp_redirect home",
+    "YourColoe_Schema_business typo",
+    "empty aggregateRating JSON-LD",
+    "footer Dubai map fallback",
+    "rukn_finder uses category+city not cities",
+    "widgets default copy UAE/Dubai",
+    "RuknContact hooks category taxonomy",
+    "invalid <root> wrapper in header",
+    "stats IntersectionObserver starts at 0"
+  ],
   "content": {
     "posts_published": 1248,
+    "posts_with_971": 1248,
+    "posts_with_img_tag": 0,
+    "posts_with_featured_media": 0,
+    "duplicate_title_groups": 24,
     "pages": 31,
     "services_cpt": 16,
+    "services_content_chars": "160-200",
     "reviews": 0,
     "faqs": 0,
     "pricing": 0,
     "portfolio": 0,
     "media_items": 5,
-    "featured_media_missing_sample": "500/500",
-    "service_categories_assigned": 1248,
+    "service_categories_term_counts_sum": 1248,
     "cities_with_posts": ["capital", "hawalli", "farwaniya", "mubarak-al-kabeer", "al-ahmadi", "al-jahra"],
-    "cities_empty": ["salmiya", "fintas"]
+    "cities_empty": ["salmiya", "fintas"],
+    "city_taxonomy_terms": 0,
+    "sidebars": 0,
+    "widgets": 0,
+    "wpcode_publish": 1,
+    "wpcode_draft": 9,
+    "wpcode_trash": 14
   },
   "csv": {
     "file": "rukn-eltatawer-kuwait-FULL.csv",
@@ -65,6 +137,7 @@
       "{PHONE_RUKN_KUWAIT}": 2496,
       "{WHATSAPP_RUKN_KUWAIT}": 2496
     },
-    "unique_titles": 1224
+    "unique_titles": 1224,
+    "do_not_reimport": true
   }
 }
