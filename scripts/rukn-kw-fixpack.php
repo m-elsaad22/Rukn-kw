@@ -167,6 +167,16 @@ function rukn_kw_document_title($title)
     if (is_front_page() && !is_paged() && !rukn_kw_is_en()) {
         return 'ركن التطور الكويت | كشف تسربات، عزل، تكييف وصيانة في كل المحافظات';
     }
+    if (is_page('contact-us')) {
+        return rukn_kw_is_en()
+            ? 'Contact via WhatsApp | Rukn El Tatawer Kuwait'
+            : 'تواصل عبر واتساب | ركن التطور الكويت';
+    }
+    if (is_page('about-us')) {
+        return rukn_kw_is_en()
+            ? 'About us | Rukn El Tatawer Kuwait'
+            : 'من نحن | ركن التطور الكويت';
+    }
     if (rukn_kw_is_en() && is_page()) {
         return get_the_title() . ' | Rukn El Tatawer Kuwait';
     }
@@ -386,11 +396,7 @@ function rukn_kw_language_attributes($out)
 add_action('wp_head', 'rukn_kw_head_meta', 1);
 function rukn_kw_head_meta()
 {
-    echo "\n<!-- rukn-kw-fixpack-20260917d -->\n";
-    if (is_front_page() && !rukn_kw_is_en()) {
-        echo '<link rel="canonical" href="' . esc_url(rukn_kw_abs('/kw/')) . '" />' . "\n";
-        echo '<title>ركن التطور الكويت | كشف تسربات، عزل، تكييف وصيانة في كل المحافظات</title>' . "\n";
-    }
+    echo "\n<!-- rukn-kw-fixpack-20260917e -->\n";
 }
 
 add_action('wp_head', 'rukn_kw_hide_call_css', 99);
@@ -442,8 +448,10 @@ function rukn_kw_buffer_filter($html)
         $html = preg_replace('~<html lang="ar" dir="rtl">~', '<html lang="en" dir="ltr">', $html, 1);
         $html = str_replace('og:locale" content="ar_AR"', 'og:locale" content="en_GB"', $html);
     }
-    if (stripos($html, '<title>') === false) {
-        $page_title = 'ركن التطور الكويت | كشف تسربات، عزل، تكييف وصيانة في كل المحافظات';
+    $page_title = esc_html(wp_get_document_title());
+    if (preg_match('~<title>[^<]*</title>~i', $html)) {
+        $html = preg_replace('~<title>[^<]*</title>~i', '<title>' . $page_title . '</title>', $html, 1);
+    } else {
         $html = preg_replace('~</head>~i', '<title>' . $page_title . '</title></head>', $html, 1);
     }
     return $html;
