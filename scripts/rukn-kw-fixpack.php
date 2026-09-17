@@ -467,10 +467,10 @@ function rukn_kw_contact_form_js()
     echo '<script>
     document.addEventListener("DOMContentLoaded",function(){
       if(document.getElementById("rukn-kw-wa-form")) return;
-      var box=document.querySelector(".standard-page, .--primary--intro--pages, article, .wrap")||document.body;
+      var box=document.querySelector("article")||document.querySelector(".--primary--intro--pages")||document.querySelector("main")||document.querySelector(".standard-page")||document.body;
       var f=document.createElement("form");
       f.id="rukn-kw-wa-form";
-      f.style.cssText="max-width:640px;margin:24px auto;padding:20px;background:#fff;border-radius:16px;display:flex;flex-direction:column;gap:10px";
+      f.style.cssText="max-width:640px;margin:32px auto;padding:20px;background:#fff;border-radius:16px;display:flex;flex-direction:column;gap:10px;position:relative;z-index:1;box-shadow:0 8px 30px rgba(10,31,78,.08)";
       f.innerHTML="<h2>طلب عبر واتساب</h2><input name=\\"name\\" required placeholder=\\"الاسم\\" style=\\"padding:10px\\"><input name=\\"area\\" placeholder=\\"المحافظة / المنطقة\\" style=\\"padding:10px\\"><input name=\\"service\\" placeholder=\\"الخدمة المطلوبة\\" style=\\"padding:10px\\"><textarea name=\\"msg\\" rows=\\"4\\" placeholder=\\"وصف المشكلة\\" style=\\"padding:10px\\"></textarea><button type=\\"submit\\" style=\\"padding:12px;background:#25D366;color:#fff;border:0;border-radius:10px;font-weight:700\\">إرسال واتساب</button><p>لا يظهر رقم اتصال حالياً. نستخدم واتساب حتى يصدر خط كويتي.</p>";
       f.addEventListener("submit",function(e){
         e.preventDefault();
