@@ -382,10 +382,20 @@ def apply_changes(wp: WordPressClient, changes: list[Change], dry_run: bool) -> 
     return stats
 
 
+def ascii_logo_url(logo_url: str) -> str:
+    """Percent-encode non-ASCII path segments so WP-CLI does not store \\uXXXX escapes."""
+    parts = urllib.parse.urlsplit(logo_url)
+    path = "/".join(
+        urllib.parse.quote(seg, safe=".-_") if seg else "" for seg in parts.path.split("/")
+    )
+    return urllib.parse.urlunsplit((parts.scheme, parts.netloc, path, parts.query, parts.fragment))
+
+
 def generate_rank_math_fix(logo_url: str, logo_id: int, prefix: str = "wp_") -> dict[str, Any]:
     """Return WP-CLI commands and equivalent SQL for Rank Math LocalBusiness."""
     name = "ركن التطور الكويت"
     region = "الكويت"
+    logo_url = ascii_logo_url(logo_url)
     address = {
         "streetAddress": "مدينة الكويت",
         "addressLocality": region,
@@ -394,7 +404,7 @@ def generate_rank_math_fix(logo_url: str, logo_id: int, prefix: str = "wp_") -> 
     }
     option = "rank-math-options-titles"
     cli = [
-        f"wp option patch update {option} knowledgegraph_type local",
+        f"wp option patch update {option} knowledgegraph_type company",
         f"wp option patch update {option} local_business_type LocalBusiness",
         f"wp option patch update {option} knowledgegraph_name {json.dumps(name, ensure_ascii=False)}",
         f"wp option patch update {option} website_name {json.dumps(name, ensure_ascii=False)}",
@@ -406,13 +416,18 @@ def generate_rank_math_fix(logo_url: str, logo_id: int, prefix: str = "wp_") -> 
     ]
     # Rank Math stores a serialized PHP array. Prefer WP-CLI; SQL below is a
     # documented fallback and must not be run blindly on a binary blob.
+    # Free Rank Math emits Organization when knowledgegraph_type=company.
+    # type=local without Rank Math Pro Local SEO falls back to Person.
     sql = f"""-- Rank Math lives in {prefix}options.option_name = 'rank-math-options-titles'
 -- Do NOT string-replace inside the serialized blob (lengths will break).
 -- Apply the WP-CLI commands above, or from this repo:
+--   wp option patch update rank-math-options-titles knowledgegraph_type company
 --   wp option patch update rank-math-options-titles knowledgegraph_name '{name}'
 --   wp option patch update rank-math-options-titles knowledgegraph_logo '{logo_url}'
 --   wp option patch update rank-math-options-titles knowledgegraph_logo_id {logo_id}
 -- Target entity: {name} / region {region} / KW. Remove UAE setting.png logo.
+-- Free Rank Math: use knowledgegraph_type=company (Organization). type=local
+-- without Pro Local SEO emits Person and drops the logo.
 """
     return {"cli": cli, "sql": sql, "name": name, "region": region, "logo_url": logo_url, "logo_id": logo_id}
 
@@ -524,8 +539,20 @@ def main() -> int:
         print("apply stats", stats)
 
     if 4 in tasks:
-        logo_id, logo_url = (media[0] if media else (3886, f"{base}/wp-content/uploads/2026/09/ركن-التطور-الكويت.webp"))
-        preferred = [row for row in media if "ركن-التطور-الكويت" in row[1] or row[0] == 3886]
+        logo_id, logo_url = (
+            media[0]
+            if media
+            else (8776, f"{base}/wp-content/uploads/2026/09/logo.webp")
+        )
+        preferred = [
+            row
+            for row in media
+            if row[1].split("?")[0].endswith("/logo.webp")
+        ] or [
+            row
+            for row in media
+            if "ركن-التطور-الكويت" in row[1] or row[0] in {3886, 8776}
+        ]
         if preferred:
             logo_id, logo_url = preferred[0]
         spec = generate_rank_math_fix(logo_url, logo_id)
