@@ -274,7 +274,12 @@ def list_media_ids(wp: WordPressClient) -> list[tuple[int, str]]:
         mime = str(item.get("mime_type") or "")
         if not mime.startswith("image/"):
             continue
-        images.append((int(item["id"]), str(item.get("source_url") or "")))
+        url = str(item.get("source_url") or "")
+        slug = url.lower()
+        if any(hint in slug for hint in ("logo-icon", "favicon", "site-icon")):
+            print(f"  skip icon #{item.get('id')}  {url}")
+            continue
+        images.append((int(item["id"]), url))
     print(f"media images: {len(images)} (library reports {headers.get('x-wp-total', '?')})")
     for mid, url in images:
         print(f"  #{mid}  {url}")
@@ -357,19 +362,19 @@ def apply_changes(wp: WordPressClient, changes: list[Change], dry_run: bool) -> 
     for i, change in enumerate(changes, 1):
         if dry_run or not change.payload:
             stats["skipped"] += 1
-            progress(i, total, "apply")
-            continue
-        status, body, _ = wp.request("PUT", f"/wp-json/wp/v2/posts/{change.post.id}", change.payload)
-        if status not in {200, 201}:
-            status, body, _ = wp.request(
-                "POST", f"/wp-json/wp/v2/posts/{change.post.id}", change.payload
-            )
-        if status in {200, 201}:
-            stats["ok"] += 1
         else:
-            stats["fail"] += 1
-            failures.append(f"{change.post.id} -> {status} {body}")
-        progress(i, total, "apply")
+            status, body, _ = wp.request("PUT", f"/wp-json/wp/v2/posts/{change.post.id}", change.payload)
+            if status not in {200, 201}:
+                status, body, _ = wp.request(
+                    "POST", f"/wp-json/wp/v2/posts/{change.post.id}", change.payload
+                )
+            if status in {200, 201}:
+                stats["ok"] += 1
+            else:
+                stats["fail"] += 1
+                failures.append(f"{change.post.id} -> {status} {body}")
+        if i % 25 == 0 or i == total:
+            progress(i, total, "apply")
     if failures:
         log = ROOT / "scripts" / "phase2_failures.jsonl"
         log.write_text("\n".join(failures) + "\n", encoding="utf-8")
