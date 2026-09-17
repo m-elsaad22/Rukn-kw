@@ -2,3 +2,4 @@ __pycache__/
 *.pyc
 *.oplusdownload
 rukn-eltatawer-kuwait-READY.csv
+.env
