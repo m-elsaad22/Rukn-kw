@@ -151,7 +151,7 @@ class WordPressClient:
                         body: Any = json.loads(raw) if raw else {}
                     except json.JSONDecodeError:
                         body = raw
-                    if self.delay:
+                    if self.delay and method not in {"GET", "HEAD"}:
                         time.sleep(self.delay)
                     return resp.status, body, {k.lower(): v for k, v in resp.headers.items()}
             except urllib.error.HTTPError as exc:
