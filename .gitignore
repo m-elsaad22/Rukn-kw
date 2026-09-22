@@ -3,3 +3,7 @@ __pycache__/
 *.oplusdownload
 rukn-eltatawer-kuwait-READY.csv
 .env
+scripts/phase3_progress.json
+scripts/phase3_audit.json
+scripts/phase3_failures.jsonl
+scripts/__pycache__/
