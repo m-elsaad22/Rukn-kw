@@ -26,7 +26,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from kw_builder import build
 from kw_cities import CITIES, parse_slug
 from kw_service_facts import FACTS, family_of
-from phase2_bulk_cleanup import WordPressClient, env, iter_published_posts, load_dotenv, progress
+from phase2_bulk_cleanup import WordPressClient, env, load_dotenv, progress
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTACT = "https://rukn-eltatawer.com/kw/contact-us/"
@@ -203,6 +203,61 @@ def catalog_from_posts(posts) -> dict:
     return cat
 
 
+def fetch_published_posts(wp: WordPressClient, per_page: int = 50) -> list:
+    from phase2_bulk_cleanup import Post
+
+    posts: list = []
+    page = 1
+    total = 0
+    fields = "id,title,slug,date,featured_media,content"
+    while True:
+        path = (
+            f"/wp-json/wp/v2/posts?status=publish&context=edit"
+            f"&per_page={per_page}&page={page}&_fields={fields}"
+        )
+        body = None
+        headers: dict[str, str] = {}
+        last_status = 0
+        for attempt in range(8):
+            status, body, headers = wp.request("GET", path, retries=5)
+            last_status = status
+            if status == 200 and isinstance(body, list):
+                break
+            if status in {0, 429, 500, 502, 503, 504}:
+                wait = min(40.0, 3.0 * (2 ** attempt))
+                print(f"fetch page {page} status={status}; retry in {wait:.0f}s", flush=True)
+                time.sleep(wait)
+                continue
+            raise SystemExit(f"fetch posts page {page} failed ({status}): {body}")
+        if last_status != 200 or not isinstance(body, list):
+            raise SystemExit(f"fetch posts page {page} failed ({last_status}): {body}")
+        if not body:
+            break
+        total = int(headers.get("x-wp-total") or total or len(body))
+        for item in body:
+            title = item.get("title")
+            if isinstance(title, dict):
+                title = title.get("raw") or title.get("rendered") or ""
+            content = item.get("content")
+            raw = content.get("raw") if isinstance(content, dict) else ""
+            posts.append(
+                Post(
+                    id=int(item["id"]),
+                    title=str(title or ""),
+                    slug=str(item.get("slug") or ""),
+                    date=str(item.get("date") or ""),
+                    featured_media=int(item.get("featured_media") or 0),
+                    content=str(raw or ""),
+                )
+            )
+        progress(len(posts), total, "fetch")
+        if len(posts) >= total or len(body) < per_page:
+            break
+        page += 1
+        time.sleep(0.4)
+    return posts
+
+
 def load_progress() -> dict[str, Any]:
     if PROGRESS_PATH.exists():
         return json.loads(PROGRESS_PATH.read_text(encoding="utf-8"))
@@ -275,7 +330,7 @@ def main() -> int:
         return 1
     print(f"authenticated as {me.get('slug')}  {base}")
 
-    posts = iter_published_posts(wp, per_page=100)
+    posts = fetch_published_posts(wp, per_page=50)
     print(f"published posts: {len(posts)}")
     decisions = score_posts(posts)
     rewrite = [d for d in decisions if d.action == "rewrite"]
