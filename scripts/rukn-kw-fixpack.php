@@ -140,6 +140,7 @@ function rukn_kw_scrub_uae_copy($value)
     }
     $value = strtr($value, rukn_kw_uae_replacements());
     $value = preg_replace('~(https://(?:www\.)?rukn-eltatawer\.com)?/kw/en(?!glish)(/|$)~', '$1/kw/english$2', $value);
+    $value = str_replace('/kw/english/blog/', '/kw/english/', $value);
     $value = str_replace('دبي مارينا', 'مدينة الكويت', $value);
     if ($value === 'البرشاء') {
         $value = 'حولي';
@@ -521,7 +522,7 @@ function rukn_kw_language_attributes($out)
 add_action('wp_head', 'rukn_kw_head_meta', 1);
 function rukn_kw_head_meta()
 {
-    echo "\n<!-- rukn-kw-fixpack-20260923c -->\n";
+    echo "\n<!-- rukn-kw-fixpack-20260923d -->\n";
 }
 
 add_action('wp_head', 'rukn_kw_hide_call_css', 99);

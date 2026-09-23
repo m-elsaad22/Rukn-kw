@@ -26,7 +26,7 @@ def main() -> int:
     src = (ROOT / "scripts" / "rukn-kw-fixpack.php").read_text(encoding="utf-8")
     src = src.replace("<?php", "", 1).strip()
     print("fixpack chars", len(src))
-    marker = "20260923c" if "20260923c" in src else "unknown"
+    marker = "20260923d" if "20260923d" in src else "unknown"
     print("marker", marker)
 
     cache = {
@@ -110,25 +110,6 @@ def main() -> int:
             write=True,
         )
         print("HomeIntro", st, str(body)[:180])
-
-    for pid in (8, 9, 11, 16, 17, 20, 22, 23, 25, 29):
-        st, body = cli(f"post meta get {pid} widget_post_meta")
-        meta = stdout_json(body)
-        if not isinstance(meta, dict):
-            print("skip widget", pid, type(meta))
-            continue
-        cleaned = scrub(meta)
-        if pid == 20:
-            cleaned["support_text"] = "واتساب"
-        if pid == 29:
-            cleaned["hide_call_button"] = "on"
-        st, body = cli(
-            f"post meta update {pid} widget_post_meta "
-            + json.dumps(json.dumps(cleaned, ensure_ascii=False))
-            + " --format=json",
-            write=True,
-        )
-        print("widget", pid, st, str(body)[:180])
 
     print("flush", cli("cache flush", write=True)[1])
     print("purge", cli("litespeed-purge all", write=True)[1])
