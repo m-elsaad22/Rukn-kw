@@ -26,7 +26,7 @@ def main() -> int:
     src = (ROOT / "scripts" / "rukn-kw-fixpack.php").read_text(encoding="utf-8")
     src = src.replace("<?php", "", 1).strip()
     print("fixpack chars", len(src))
-    marker = "20260923b" if "20260923b" in src else "unknown"
+    marker = "20260923c" if "20260923c" in src else "unknown"
     print("marker", marker)
 
     cache = {

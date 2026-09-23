@@ -83,8 +83,6 @@ function rukn_kw_uae_replacements()
     $map = array(
         'https://rukn-eltatawer.com/kw/kw/' => 'https://rukn-eltatawer.com/kw/',
         'https://www.rukn-eltatawer.com/kw/kw/' => 'https://rukn-eltatawer.com/kw/',
-        'https://www.rukn-eltatawer.com/kw/en/' => 'https://rukn-eltatawer.com/kw/english/',
-        'https://rukn-eltatawer.com/kw/en/' => 'https://rukn-eltatawer.com/kw/english/',
         'https://www.rukn-eltatawer.com/kw/' => 'https://rukn-eltatawer.com/kw/',
         'https://www.rukn-eltatawer.com/wp-content/uploads/icon/setting.png' => $logo,
         'https://rukn-eltatawer.com/wp-content/uploads/icon/setting.png' => $logo,
@@ -141,6 +139,7 @@ function rukn_kw_scrub_uae_copy($value)
         return $value;
     }
     $value = strtr($value, rukn_kw_uae_replacements());
+    $value = preg_replace('~(https://(?:www\.)?rukn-eltatawer\.com)?/kw/en(?!glish)(/|$)~', '$1/kw/english$2', $value);
     $value = str_replace('دبي مارينا', 'مدينة الكويت', $value);
     if ($value === 'البرشاء') {
         $value = 'حولي';
@@ -189,8 +188,20 @@ function rukn_kw_abs($path)
 {
     $path = '/' . ltrim((string) $path, '/');
     $path = preg_replace('~/+~', '/', $path);
-    return RUKN_KW_ORIGIN . $path;
+    if (preg_match('~^/kw(/|$)~', $path)) {
+        $path = preg_replace('~^/kw~', '', $path);
+        if ($path === '') {
+            $path = '/';
+        }
+    }
+    return set_url_scheme(home_url($path), 'https');
 }
+
+add_filter('allowed_redirect_hosts', static function ($hosts) {
+    $hosts[] = 'rukn-eltatawer.com';
+    $hosts[] = 'www.rukn-eltatawer.com';
+    return array_values(array_unique($hosts));
+});
 
 add_filter('wp_get_nav_menu_items', 'rukn_kw_keep_menu_items', 99, 3);
 function rukn_kw_keep_menu_items($items, $menu, $args)
@@ -365,10 +376,10 @@ function rukn_kw_early_routes()
         exit;
     }
 
-    if (preg_match('~^/kw/en(?:/|$)~', $path_r) && strpos($path, '/english') === false) {
+    if (preg_match('~(^|/kw)/en(?:/|$)~', $path) && strpos($path, 'english') === false) {
         $rest = '';
-        if (preg_match('~^/kw/en/(.*)$~', $path_r, $m)) {
-            $rest = trim($m[1], '/');
+        if (preg_match('~(^|/kw)/en/(.*)$~', $path_r, $m)) {
+            $rest = trim($m[2], '/');
         }
         wp_safe_redirect(rukn_kw_abs('/kw/english/' . ($rest !== '' ? $rest . '/' : '')), 301);
         exit;
@@ -510,7 +521,7 @@ function rukn_kw_language_attributes($out)
 add_action('wp_head', 'rukn_kw_head_meta', 1);
 function rukn_kw_head_meta()
 {
-    echo "\n<!-- rukn-kw-fixpack-20260923b -->\n";
+    echo "\n<!-- rukn-kw-fixpack-20260923c -->\n";
 }
 
 add_action('wp_head', 'rukn_kw_hide_call_css', 99);
