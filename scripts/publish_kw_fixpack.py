@@ -26,7 +26,7 @@ def main() -> int:
     src = (ROOT / "scripts" / "rukn-kw-fixpack.php").read_text(encoding="utf-8")
     src = src.replace("<?php", "", 1).strip()
     print("fixpack chars", len(src))
-    marker = "20260923d" if "20260923d" in src else "unknown"
+    marker = "20260923e" if "20260923e" in src else "unknown"
     print("marker", marker)
 
     cache = {
@@ -110,6 +110,27 @@ def main() -> int:
             write=True,
         )
         print("HomeIntro", st, str(body)[:180])
+
+    widget_ids = (8, 9, 11, 16, 17, 20, 22, 23, 25, 29)
+    payload = {}
+    for pid in widget_ids:
+        st, body = cli(f"post meta get {pid} widget_post_meta")
+        meta = stdout_json(body)
+        if isinstance(meta, dict):
+            cleaned = scrub(meta)
+            if pid == 20:
+                cleaned["support_text"] = "واتساب"
+            if pid == 29:
+                cleaned["hide_call_button"] = "on"
+            payload[str(pid)] = cleaned
+    if payload:
+        php = (
+            "$pairs=json_decode("
+            + json.dumps(json.dumps(payload, ensure_ascii=False))
+            + ", true); foreach($pairs as $id=>$meta){ update_post_meta((int)$id,'widget_post_meta',$meta); echo \"ok $id\\n\"; }"
+        )
+        st, body = cli("eval " + json.dumps(php), write=True, timeout=180)
+        print("widgets eval", st, str(body)[:400])
 
     print("flush", cli("cache flush", write=True)[1])
     print("purge", cli("litespeed-purge all", write=True)[1])
