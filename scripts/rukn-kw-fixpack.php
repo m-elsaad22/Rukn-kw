@@ -54,12 +54,124 @@ add_filter('pre_option_rukn_hide_call_global', static function ($v) {
 add_filter('pre_option_whatsapp_number', static function ($v) {
     return RUKN_KW_WA;
 }, 10, 1);
+add_filter('pre_option_kayan_currency', static function ($v) {
+    return 'KWD';
+}, 10, 1);
+add_filter('pre_option_currency', static function ($v) {
+    return 'KWD';
+}, 10, 1);
+add_filter('pre_option_kayan_tax_rate', static function ($v) {
+    return '0';
+}, 10, 1);
 add_filter('pre_option_footer__map_embed', 'rukn_kw_kuwait_map', 10, 1);
 add_filter('pre_option_company__map_code', 'rukn_kw_kuwait_map', 10, 1);
+add_filter('option_HomeIntro', 'rukn_kw_filter_homeintro', 20);
+add_filter('get_post_metadata', 'rukn_kw_filter_widget_meta', 20, 4);
 
 function rukn_kw_empty_phone($v)
 {
     return '';
+}
+
+function rukn_kw_uae_replacements()
+{
+    static $map = null;
+    if ($map !== null) {
+        return $map;
+    }
+    $logo = 'https://rukn-eltatawer.com/kw/wp-content/uploads/2026/09/logo.webp';
+    $map = array(
+        'https://rukn-eltatawer.com/kw/kw/' => 'https://rukn-eltatawer.com/kw/',
+        'https://www.rukn-eltatawer.com/kw/kw/' => 'https://rukn-eltatawer.com/kw/',
+        'https://www.rukn-eltatawer.com/kw/en/' => 'https://rukn-eltatawer.com/kw/english/',
+        'https://rukn-eltatawer.com/kw/en/' => 'https://rukn-eltatawer.com/kw/english/',
+        'https://www.rukn-eltatawer.com/kw/' => 'https://rukn-eltatawer.com/kw/',
+        'https://www.rukn-eltatawer.com/wp-content/uploads/icon/setting.png' => $logo,
+        'https://rukn-eltatawer.com/wp-content/uploads/icon/setting.png' => $logo,
+        'اختر الإمارة' => 'اختر المحافظة',
+        'خريطة الإمارات الكحلية' => 'خريطة الكويت',
+        'في جميع أنحاء الإمارات' => 'في جميع أنحاء الكويت',
+        'جميع إمارات الدولة السبع بلا استثناء' => 'جميع محافظات الكويت بلا استثناء',
+        'إمارات الدولة السبع' => 'محافظات الكويت الست',
+        'سجل حافل في السوق الإماراتي' => 'سجل حافل في السوق الكويتي',
+        'في مختلف إمارات الإمارات' => 'في مختلف محافظات الكويت',
+        'خدماتنا في جميع {%إمارات الدولة%}' => 'خدماتنا في جميع {%محافظات الكويت%}',
+        'أينما كنت في الإمارات' => 'أينما كنت في الكويت',
+        'تغطية كاملة لـ 7 إمارات' => 'تغطية كاملة لـ 6 محافظات',
+        'فريق محلي في كل إمارة' => 'فريق محلي في كل محافظة',
+        'المعايير المعتمدة في دولة الإمارات' => 'المعايير المعتمدة في دولة الكويت',
+        'رقم تسجيل ضريبي (VAT) رسمي وفواتير نظامية' => 'فواتير واضحة بالدينار الكويتي بعد المعاينة',
+        'maps.google.com/maps?q=Dubai,United+Arab+Emirates' => 'maps.google.com/maps?q=Kuwait+City,Kuwait',
+        'دبي، الإمارات العربية المتحدة' => 'مدينة الكويت، الكويت',
+        'فيلا — دبي مارينا' => 'فيلا — مدينة الكويت',
+        'فيلا — البرشاء' => 'فيلا — حولي',
+        'مبنى — الشارقة' => 'مبنى — الفروانية',
+        'class="uae-svg"' => 'class="kw-svg"',
+        "class='uae-svg'" => "class='kw-svg'",
+        '.uae-svg' => '.kw-svg',
+        '"currency":"AED"' => '"currency":"KWD"',
+        "'currency':'AED'" => "'currency':'KWD'",
+        'data-currency="AED"' => 'data-currency="KWD"',
+        "data-currency='AED'" => "data-currency='KWD'",
+        '<small>AED</small>' => '<small>KWD</small>',
+        '"taxRate":"5"' => '"taxRate":"0"',
+        "'taxRate':'5'" => "'taxRate':'0'",
+        '"taxRate":5' => '"taxRate":0',
+        'http://rukn-eltatawer.com/' => 'https://rukn-eltatawer.com/',
+        '[[عدد المشاريع]]' => '540+',
+        '[[سنة التأسيس]]' => '2015',
+        '<h1>services</h1>' => '<h1>الخدمات</h1>',
+        '<h1>reviews</h1>' => '<h1>تقييمات العملاء</h1>',
+        '<h1>faqs</h1>' => '<h1>الأسئلة الشائعة</h1>',
+        '<h1>pricing</h1>' => '<h1>الأسعار</h1>',
+        '<h1>portfolio</h1>' => '<h1>أعمالنا</h1>',
+    );
+    return $map;
+}
+
+function rukn_kw_scrub_uae_copy($value)
+{
+    if (is_array($value)) {
+        foreach ($value as $key => $item) {
+            $value[$key] = rukn_kw_scrub_uae_copy($item);
+        }
+        return $value;
+    }
+    if (!is_string($value) || $value === '') {
+        return $value;
+    }
+    $value = strtr($value, rukn_kw_uae_replacements());
+    $value = str_replace('دبي مارينا', 'مدينة الكويت', $value);
+    if ($value === 'البرشاء') {
+        $value = 'حولي';
+    }
+    if ($value === 'الشارقة') {
+        $value = 'الفروانية';
+    }
+    if ($value === '7 إمارات') {
+        $value = '6 محافظات';
+    }
+    return $value;
+}
+
+function rukn_kw_filter_homeintro($value)
+{
+    $value = rukn_kw_scrub_uae_copy($value);
+    if (is_array($value) && isset($value['slider_intro_v1']) && is_array($value['slider_intro_v1'])) {
+        $value['slider_intro_v1']['hide_call_button'] = 'on';
+    }
+    return $value;
+}
+
+function rukn_kw_filter_widget_meta($check, $object_id, $meta_key, $single)
+{
+    if ($check !== null || $meta_key !== 'widget_post_meta') {
+        return $check;
+    }
+    remove_filter('get_post_metadata', 'rukn_kw_filter_widget_meta', 20);
+    $raw = get_post_meta($object_id, $meta_key, false);
+    add_filter('get_post_metadata', 'rukn_kw_filter_widget_meta', 20, 4);
+    return rukn_kw_scrub_uae_copy($raw);
 }
 
 function rukn_kw_kuwait_map($v)
@@ -134,6 +246,7 @@ function rukn_kw_hreflang($hreflangs)
         '/kw/about-us/' => array(rukn_kw_abs('/kw/about-us/'), rukn_kw_abs('/kw/english/about-us/')),
         '/kw/contact-us/' => array(rukn_kw_abs('/kw/contact-us/'), rukn_kw_abs('/kw/english/contact-us/')),
         '/kw/privacy-policy/' => array(rukn_kw_abs('/kw/privacy-policy/'), rukn_kw_abs('/kw/english/privacy-policy/')),
+        '/kw/blog/' => array(rukn_kw_abs('/kw/blog/'), rukn_kw_abs('/kw/english/')),
         '/kw/english/' => array($ar, $en),
         '/kw/english/about-us/' => array(rukn_kw_abs('/kw/about-us/'), rukn_kw_abs('/kw/english/about-us/')),
         '/kw/english/contact-us/' => array(rukn_kw_abs('/kw/contact-us/'), rukn_kw_abs('/kw/english/contact-us/')),
@@ -239,6 +352,7 @@ function rukn_kw_early_routes()
     if (is_admin()) {
         return;
     }
+    rukn_kw_buffer_start();
     $path = (string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
     $path_r = rtrim($path, '/');
 
@@ -396,7 +510,7 @@ function rukn_kw_language_attributes($out)
 add_action('wp_head', 'rukn_kw_head_meta', 1);
 function rukn_kw_head_meta()
 {
-    echo "\n<!-- rukn-kw-fixpack-20260917e -->\n";
+    echo "\n<!-- rukn-kw-fixpack-20260923b -->\n";
 }
 
 add_action('wp_head', 'rukn_kw_hide_call_css', 99);
@@ -417,6 +531,11 @@ function rukn_kw_buffer_start()
     if (is_admin() || wp_doing_ajax()) {
         return;
     }
+    static $started = false;
+    if ($started) {
+        return;
+    }
+    $started = true;
     ob_start('rukn_kw_buffer_filter');
 }
 
@@ -425,19 +544,9 @@ function rukn_kw_buffer_filter($html)
     if (!is_string($html) || $html === '') {
         return $html;
     }
-    $html = str_replace('https://rukn-eltatawer.com/kw/kw/', 'https://rukn-eltatawer.com/kw/', $html);
-    $html = str_replace('https://www.rukn-eltatawer.com/kw/kw/', 'https://rukn-eltatawer.com/kw/', $html);
-    $html = str_replace('اختر الإمارة', 'اختر المحافظة', $html);
-    $html = str_replace('[[عدد المشاريع]]', '1248', $html);
-    $html = str_replace('[[سنة التأسيس]]', '2026', $html);
-    $html = str_replace('maps.google.com/maps?q=Dubai,United+Arab+Emirates', 'maps.google.com/maps?q=Kuwait+City,Kuwait', $html);
-    $html = str_replace('دبي، الإمارات العربية المتحدة', 'مدينة الكويت، الكويت', $html);
-    $html = str_replace('http://rukn-eltatawer.com/', 'https://rukn-eltatawer.com/', $html);
-    $html = str_replace('<h1>services</h1>', '<h1>الخدمات</h1>', $html);
-    $html = str_replace('<h1>reviews</h1>', '<h1>تقييمات العملاء</h1>', $html);
-    $html = str_replace('<h1>faqs</h1>', '<h1>الأسئلة الشائعة</h1>', $html);
-    $html = str_replace('<h1>pricing</h1>', '<h1>الأسعار</h1>', $html);
-    $html = str_replace('<h1>portfolio</h1>', '<h1>أعمالنا</h1>', $html);
+    $html = rukn_kw_scrub_uae_copy($html);
+    $html = preg_replace('~<root(\s|>)~i', '<div$1', $html);
+    $html = preg_replace('~</root>~i', '</div>', $html);
     $html = preg_replace('~<script type="application/ld\+json">\{[^{}]*"@type": "LocalBusiness"[^<]*\}</script>~s', '', $html);
     $html = preg_replace('~href="tel:[^"]+"~', 'href="#rukn-no-call"', $html);
     $html = preg_replace('~\+971[\s\-]*58[\s\-]*663[\s\-]*4710~', '', $html);
