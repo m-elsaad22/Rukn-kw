@@ -54,12 +54,175 @@ add_filter('pre_option_rukn_hide_call_global', static function ($v) {
 add_filter('pre_option_whatsapp_number', static function ($v) {
     return RUKN_KW_WA;
 }, 10, 1);
+add_filter('pre_option_kayan_currency', static function ($v) {
+    return 'KWD';
+}, 10, 1);
+add_filter('pre_option_currency', static function ($v) {
+    return 'KWD';
+}, 10, 1);
+add_filter('pre_option_kayan_tax_rate', static function ($v) {
+    return '0';
+}, 10, 1);
 add_filter('pre_option_footer__map_embed', 'rukn_kw_kuwait_map', 10, 1);
 add_filter('pre_option_company__map_code', 'rukn_kw_kuwait_map', 10, 1);
+add_filter('option_HomeIntro', 'rukn_kw_filter_homeintro', 20);
+add_filter('get_post_metadata', 'rukn_kw_filter_widget_meta', 20, 4);
 
 function rukn_kw_empty_phone($v)
 {
     return '';
+}
+
+function rukn_kw_uae_replacements()
+{
+    static $map = null;
+    if ($map !== null) {
+        return $map;
+    }
+    $logo = 'https://rukn-eltatawer.com/kw/wp-content/uploads/2026/09/logo.webp';
+    $map = array(
+        'https://rukn-eltatawer.com/kw/kw/' => 'https://rukn-eltatawer.com/kw/',
+        'https://www.rukn-eltatawer.com/kw/kw/' => 'https://rukn-eltatawer.com/kw/',
+        'https://www.rukn-eltatawer.com/kw/' => 'https://rukn-eltatawer.com/kw/',
+        'https://www.rukn-eltatawer.com/wp-content/uploads/icon/setting.png' => $logo,
+        'https://rukn-eltatawer.com/wp-content/uploads/icon/setting.png' => $logo,
+        'اختر الإمارة' => 'اختر المحافظة',
+        'خريطة الإمارات الكحلية' => 'خريطة الكويت',
+        'في جميع أنحاء الإمارات' => 'في جميع أنحاء الكويت',
+        'جميع إمارات الدولة السبع بلا استثناء' => 'جميع محافظات الكويت بلا استثناء',
+        'إمارات الدولة السبع' => 'محافظات الكويت الست',
+        'سجل حافل في السوق الإماراتي' => 'سجل حافل في السوق الكويتي',
+        'في مختلف إمارات الإمارات' => 'في مختلف محافظات الكويت',
+        'خدماتنا في جميع {%إمارات الدولة%}' => 'خدماتنا في جميع {%محافظات الكويت%}',
+        'أينما كنت في الإمارات' => 'أينما كنت في الكويت',
+        'تغطية كاملة لـ 7 إمارات' => 'تغطية كاملة لـ 6 محافظات',
+        'فريق محلي في كل إمارة' => 'فريق محلي في كل محافظة',
+        'المعايير المعتمدة في دولة الإمارات' => 'المعايير المعتمدة في دولة الكويت',
+        'رقم تسجيل ضريبي (VAT) رسمي وفواتير نظامية' => 'فواتير واضحة بالدينار الكويتي بعد المعاينة',
+        'maps.google.com/maps?q=Dubai,United+Arab+Emirates' => 'maps.google.com/maps?q=Kuwait+City,Kuwait',
+        'دبي، الإمارات العربية المتحدة' => 'مدينة الكويت، الكويت',
+        'فيلا — دبي مارينا' => 'فيلا — مدينة الكويت',
+        'فيلا — البرشاء' => 'فيلا — حولي',
+        'مبنى — الشارقة' => 'مبنى — الفروانية',
+        'class="uae-svg"' => 'class="kw-svg"',
+        "class='uae-svg'" => "class='kw-svg'",
+        '.uae-svg' => '.kw-svg',
+        '"currency":"AED"' => '"currency":"KWD"',
+        "'currency':'AED'" => "'currency':'KWD'",
+        'data-currency="AED"' => 'data-currency="KWD"',
+        "data-currency='AED'" => "data-currency='KWD'",
+        '<small>AED</small>' => '<small>KWD</small>',
+        '"taxRate":"5"' => '"taxRate":"0"',
+        "'taxRate':'5'" => "'taxRate':'0'",
+        '"taxRate":5' => '"taxRate":0',
+        'http://rukn-eltatawer.com/' => 'https://rukn-eltatawer.com/',
+        '[[عدد المشاريع]]' => '540+',
+        '[[سنة التأسيس]]' => '2015',
+        '<h1>services</h1>' => '<h1>الخدمات</h1>',
+        '<h1>reviews</h1>' => '<h1>تقييمات العملاء</h1>',
+        '<h1>faqs</h1>' => '<h1>الأسئلة الشائعة</h1>',
+        '<h1>pricing</h1>' => '<h1>الأسعار</h1>',
+        'تغطية 8 مدينة' => 'تغطية محافظات الكويت',
+        '8 مدينة' => '6 محافظات',
+        '8 مدن' => '6 محافظات',
+        '>Toggle<' => '>المحتويات<',
+    );
+    return $map;
+}
+
+function rukn_kw_scrub_uae_copy($value)
+{
+    if (is_array($value)) {
+        foreach ($value as $key => $item) {
+            $value[$key] = rukn_kw_scrub_uae_copy($item);
+        }
+        return $value;
+    }
+    if (!is_string($value) || $value === '') {
+        return $value;
+    }
+    $value = strtr($value, rukn_kw_uae_replacements());
+    $value = preg_replace('~(https://(?:www\.)?rukn-eltatawer\.com)?/kw/en(?!glish)(/|$)~', '$1/kw/english$2', $value);
+    $value = str_replace('/kw/english/blog/', '/kw/english/', $value);
+    $value = str_replace('دبي مارينا', 'مدينة الكويت', $value);
+    if ($value === 'البرشاء') {
+        $value = 'حولي';
+    }
+    if ($value === 'الشارقة') {
+        $value = 'الفروانية';
+    }
+    if ($value === '7 إمارات') {
+        $value = '6 محافظات';
+    }
+    return $value;
+}
+
+function rukn_kw_kuwait_map_svg()
+{
+    return '<svg class="kw-svg" viewBox="0 0 300 220" aria-hidden="true"><path d="M52 78 L162 44 L196 50 L208 78 L172 94 C164 108 166 122 186 132 L230 152 L214 196 L160 208 L88 190 L48 150 L42 110 Z"/><path d="M198 56 L228 48 L236 66 L214 74 Z"/></svg>';
+}
+
+function rukn_kw_replace_uae_map($html)
+{
+    $html = preg_replace(
+        '~<svg class="(?:uae|kw)-svg"[^>]*>\s*<path d="M40,70[^"]*"\s*/>\s*</svg>~s',
+        rukn_kw_kuwait_map_svg(),
+        $html
+    );
+    return $html;
+}
+
+function rukn_kw_replace_parent_icons($html)
+{
+    $map = array(
+        'search.png' => 'fas fa-magnifying-glass',
+        'location1.png' => 'fas fa-location-dot',
+        'setting.png' => 'fas fa-screwdriver-wrench',
+        'price.png' => 'fas fa-file-invoice-dollar',
+        'water-leak-detection.png' => 'fas fa-droplet',
+        'insulation-services.png' => 'fas fa-layer-group',
+        'electrical-appliance-repair.png' => 'fas fa-snowflake',
+        'cleaning-services.png' => 'fas fa-spray-can-sparkles',
+        'pest-control.png' => 'fas fa-bug-slash',
+        'plumbing-services.png' => 'fas fa-wrench',
+        'building-maintenance.png' => 'fas fa-helmet-safety',
+        'landscaping-services.png' => 'fas fa-tree',
+        'decoration-services.png' => 'fas fa-paint-roller',
+        'skilled-technicians.png' => 'fas fa-user-gear',
+        'whatsapp.png' => 'fab fa-whatsapp',
+        'tab.png' => 'fas fa-briefcase',
+        'lifetime-warranty.png' => 'fas fa-shield-halved',
+        'fast-response.png' => 'fas fa-bolt',
+    );
+    return preg_replace_callback(
+        '~<img([^>]+)src=["\']https://(?:www\.)?rukn-eltatawer\.com/wp-content/uploads/icon/([^"\']+)["\'][^>]*>~i',
+        static function ($m) use ($map) {
+            $file = strtolower(basename($m[2]));
+            $fa = isset($map[$file]) ? $map[$file] : 'fas fa-circle-check';
+            return '<i class="' . $fa . '" aria-hidden="true"></i>';
+        },
+        $html
+    );
+}
+
+function rukn_kw_filter_homeintro($value)
+{
+    $value = rukn_kw_scrub_uae_copy($value);
+    if (is_array($value) && isset($value['slider_intro_v1']) && is_array($value['slider_intro_v1'])) {
+        $value['slider_intro_v1']['hide_call_button'] = 'on';
+    }
+    return $value;
+}
+
+function rukn_kw_filter_widget_meta($check, $object_id, $meta_key, $single)
+{
+    if ($check !== null || $meta_key !== 'widget_post_meta') {
+        return $check;
+    }
+    remove_filter('get_post_metadata', 'rukn_kw_filter_widget_meta', 20);
+    $raw = get_post_meta($object_id, $meta_key, false);
+    add_filter('get_post_metadata', 'rukn_kw_filter_widget_meta', 20, 4);
+    return rukn_kw_scrub_uae_copy($raw);
 }
 
 function rukn_kw_kuwait_map($v)
@@ -77,8 +240,20 @@ function rukn_kw_abs($path)
 {
     $path = '/' . ltrim((string) $path, '/');
     $path = preg_replace('~/+~', '/', $path);
-    return RUKN_KW_ORIGIN . $path;
+    if (preg_match('~^/kw(/|$)~', $path)) {
+        $path = preg_replace('~^/kw~', '', $path);
+        if ($path === '') {
+            $path = '/';
+        }
+    }
+    return set_url_scheme(home_url($path), 'https');
 }
+
+add_filter('allowed_redirect_hosts', static function ($hosts) {
+    $hosts[] = 'rukn-eltatawer.com';
+    $hosts[] = 'www.rukn-eltatawer.com';
+    return array_values(array_unique($hosts));
+});
 
 add_filter('wp_get_nav_menu_items', 'rukn_kw_keep_menu_items', 99, 3);
 function rukn_kw_keep_menu_items($items, $menu, $args)
@@ -134,6 +309,7 @@ function rukn_kw_hreflang($hreflangs)
         '/kw/about-us/' => array(rukn_kw_abs('/kw/about-us/'), rukn_kw_abs('/kw/english/about-us/')),
         '/kw/contact-us/' => array(rukn_kw_abs('/kw/contact-us/'), rukn_kw_abs('/kw/english/contact-us/')),
         '/kw/privacy-policy/' => array(rukn_kw_abs('/kw/privacy-policy/'), rukn_kw_abs('/kw/english/privacy-policy/')),
+        '/kw/blog/' => array(rukn_kw_abs('/kw/blog/'), rukn_kw_abs('/kw/english/')),
         '/kw/english/' => array($ar, $en),
         '/kw/english/about-us/' => array(rukn_kw_abs('/kw/about-us/'), rukn_kw_abs('/kw/english/about-us/')),
         '/kw/english/contact-us/' => array(rukn_kw_abs('/kw/contact-us/'), rukn_kw_abs('/kw/english/contact-us/')),
@@ -239,6 +415,7 @@ function rukn_kw_early_routes()
     if (is_admin()) {
         return;
     }
+    rukn_kw_buffer_start();
     $path = (string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
     $path_r = rtrim($path, '/');
 
@@ -251,10 +428,10 @@ function rukn_kw_early_routes()
         exit;
     }
 
-    if (preg_match('~^/kw/en(?:/|$)~', $path_r) && strpos($path, '/english') === false) {
+    if (preg_match('~(^|/kw)/en(?:/|$)~', $path) && strpos($path, 'english') === false) {
         $rest = '';
-        if (preg_match('~^/kw/en/(.*)$~', $path_r, $m)) {
-            $rest = trim($m[1], '/');
+        if (preg_match('~(^|/kw)/en/(.*)$~', $path_r, $m)) {
+            $rest = trim($m[2], '/');
         }
         wp_safe_redirect(rukn_kw_abs('/kw/english/' . ($rest !== '' ? $rest . '/' : '')), 301);
         exit;
@@ -280,22 +457,52 @@ function rukn_kw_shell_start($title)
 {
     $lang = rukn_kw_is_en() ? 'en' : 'ar';
     $dir  = rukn_kw_is_en() ? 'ltr' : 'rtl';
+    $home = esc_url(rukn_kw_abs('/kw/'));
+    $about = esc_url(rukn_kw_abs('/kw/about-us/'));
+    $contact = esc_url(rukn_kw_abs('/kw/contact-us/'));
+    $blog = esc_url(rukn_kw_abs('/kw/blog/'));
+    $en = esc_url(rukn_kw_abs('/kw/english/'));
+    $wa = 'https://wa.me/' . rawurlencode(RUKN_KW_WA);
     echo '<!DOCTYPE html><html lang="' . esc_attr($lang) . '" dir="' . esc_attr($dir) . '"><head>';
     echo '<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">';
     echo '<title>' . esc_html($title) . '</title>';
     wp_head();
-    echo '<style>
-    body{font-family:Cairo,Tahoma,sans-serif;background:#f6f8fb;margin:0;color:#0A1F4E}
-    .rk-wrap{max-width:1100px;margin:40px auto;padding:0 16px}
-    .rk-card{background:#fff;border-radius:16px;padding:28px;box-shadow:0 8px 30px rgba(10,31,78,.08)}
-    .rk-card h1{margin-top:0}
-    .rk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-top:24px}
-    .rk-item{background:#fff;border-radius:14px;padding:18px;text-decoration:none;color:#0A1F4E;box-shadow:0 4px 16px rgba(10,31,78,.07);display:block}
-    .rk-item h2{font-size:18px;margin:0 0 8px}
-    .rk-item p{margin:0;color:#466;font-size:14px;line-height:1.7}
-    .rk-wa{display:inline-block;margin-top:18px;background:#25D366;color:#fff;padding:12px 18px;border-radius:999px;text-decoration:none;font-weight:700}
-    .rk-nav a{margin-left:12px}
+    echo '<style id="rukn-kw-design-shell">
+    :root{--navy:#0A1F4E;--turq:#2E9DF7;--aqua:#4FA8FF;--gold:#C9A227;--gold2:#F0CE73;--wa:#25D366;--bg:#F4F8FD;--text:#1C2E44;--text2:#3A5068;--border:#E2EAF5;--r-m:24px;--sh-l:0 24px 60px rgba(10,31,78,.16);--grad:linear-gradient(135deg,#0A1F4E 0%,#1A3A6B 45%,#2E9DF7 100%);--grad-cta:linear-gradient(135deg,#2980D4,#2E9DF7)}
+    body.rukn-kw-shell{font-family:Cairo,Tajawal,Tahoma,sans-serif;background:var(--bg);margin:0;color:var(--text);line-height:1.7}
+    .rk-hdr{background:var(--grad);color:#fff;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+    .rk-hdr a{color:#fff;text-decoration:none;font-weight:700}
+    .rk-hdr nav{display:flex;gap:14px;flex-wrap:wrap}
+    .rk-hdr .btn-wa{background:var(--wa);padding:10px 16px;border-radius:12px}
+    .phero{padding:48px 24px 36px;background:var(--grad);color:#fff}
+    .phero h1{margin:0;color:#fff;font-size:clamp(28px,4vw,42px)}
+    .phero .psub{color:rgba(255,255,255,.86);margin-top:12px;max-width:720px}
+    .phero .crumb a{color:#fff}
+    .sec{padding:48px 24px}
+    .wrap{max-width:1400px;margin:0 auto}
+    .blog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:26px}
+    .bcard{background:#fff;border:1px solid var(--border);border-radius:var(--r-m);overflow:hidden;text-decoration:none;color:inherit;display:block;transition:.3s}
+    .bcard:hover{transform:translateY(-8px);box-shadow:var(--sh-l)}
+    .bcard .bimg{height:140px;background:var(--grad);display:grid;place-items:center;color:#fff;font-size:32px}
+    .bcard .bbody{padding:22px}
+    .bcard h3{margin:0 0 8px;font-size:18px;color:var(--navy)}
+    .bcard p{margin:0;color:var(--text2);font-size:14px}
+    .bcard .bread{display:inline-flex;margin-top:12px;color:var(--turq);font-weight:700}
+    .pager{display:flex;justify-content:center;gap:8px;margin-top:36px;flex-wrap:wrap}
+    .err-wrap{min-height:70vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:80px 24px;background:var(--grad);color:#fff}
+    .err-num{font-weight:900;font-size:clamp(90px,16vw,160px);line-height:1;background:linear-gradient(120deg,#fff,var(--aqua));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+    .err-wrap h2{color:#fff;margin:10px 0 14px}
+    .err-wrap p{color:rgba(255,255,255,.82);max-width:520px;margin:0 auto 30px}
+    .err-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+    .err-actions a,.err-links a{color:#fff}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:14px 22px;border-radius:14px;font-weight:700;text-decoration:none}
+    .btn-quote{background:linear-gradient(120deg,var(--gold),var(--gold2));color:#0A1F4E}
+    .btn-wa{background:var(--wa);color:#fff}
+    .err-links{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:28px}
     </style></head><body class="rukn-kw-shell">';
+    echo '<header class="rk-hdr"><a href="' . $home . '">ركن التطور الكويت</a><nav>';
+    echo '<a href="' . $home . '">الرئيسية</a><a href="' . $about . '">من نحن</a><a href="' . $contact . '">تواصل</a><a href="' . $blog . '">المدونة</a><a href="' . $en . '">English</a>';
+    echo '</nav><a class="btn-wa" href="' . esc_url($wa) . '" rel="noopener">واتساب</a></header>';
 }
 
 function rukn_kw_shell_end()
@@ -309,14 +516,17 @@ function rukn_kw_render_404()
     status_header(404);
     nocache_headers();
     rukn_kw_shell_start('الصفحة غير موجودة | ركن التطور الكويت');
-    echo '<div class="rk-wrap"><div class="rk-card">';
-    echo '<h1>الصفحة غير موجودة</h1>';
+    $home = esc_url(rukn_kw_abs('/kw/'));
+    $blog = esc_url(rukn_kw_abs('/kw/blog/'));
+    $contact = esc_url(rukn_kw_abs('/kw/contact-us/'));
+    $wa = 'https://wa.me/' . rawurlencode(RUKN_KW_WA);
+    echo '<section class="err-wrap"><div class="wrap">';
+    echo '<div class="err-num">404</div><h2>عذراً، هذه الصفحة غير موجودة</h2>';
     echo '<p>الرابط غير صحيح أو نُقل المحتوى. يمكنك العودة للرئيسية أو مراسلتنا عبر واتساب.</p>';
-    echo '<p class="rk-nav"><a href="' . esc_url(rukn_kw_abs('/kw/')) . '">الرئيسية</a>';
-    echo ' <a href="' . esc_url(rukn_kw_abs('/kw/blog/')) . '">المدونة</a>';
-    echo ' <a href="' . esc_url(rukn_kw_abs('/kw/contact-us/')) . '">تواصل</a></p>';
-    echo '<a class="rk-wa" href="https://wa.me/' . rawurlencode(RUKN_KW_WA) . '" rel="noopener">واتساب</a>';
-    echo '</div></div>';
+    echo '<div class="err-actions"><a class="btn btn-quote" href="' . $home . '">العودة للرئيسية</a>';
+    echo '<a class="btn btn-wa" href="' . esc_url($wa) . '" rel="noopener">واتساب</a></div>';
+    echo '<div class="err-links"><a href="' . $home . '">الرئيسية</a><a href="' . $blog . '">المدونة</a><a href="' . $contact . '">تواصل</a></div>';
+    echo '</div></section>';
     rukn_kw_shell_end();
 }
 
@@ -326,7 +536,8 @@ function rukn_kw_render_search()
     $title = 'نتائج البحث: ' . $q . ' | ركن التطور الكويت';
     status_header(200);
     rukn_kw_shell_start($title);
-    echo '<div class="rk-wrap"><div class="rk-card"><h1>نتائج البحث عن ' . esc_html($q) . '</h1>';
+    echo '<section class="phero compact"><div class="wrap"><h1>نتائج البحث عن ' . esc_html($q) . '</h1>';
+    echo '<p class="psub">مقالات وصفحات ركن التطور الكويت.</p></div></section><section class="sec"><div class="wrap">';
     $query = new WP_Query(array(
         's'              => $q,
         'post_type'      => array('post', 'page', 'services'),
@@ -335,20 +546,21 @@ function rukn_kw_render_search()
     ));
     if ($q === '' || !$query->have_posts()) {
         echo '<p>لا توجد نتائج مطابقة. جرّب كلمة أوضح أو تواصل عبر واتساب.</p>';
-        echo '<a class="rk-wa" href="https://wa.me/' . rawurlencode(RUKN_KW_WA) . '" rel="noopener">واتساب</a>';
+        echo '<a class="btn btn-wa" href="https://wa.me/' . rawurlencode(RUKN_KW_WA) . '" rel="noopener">واتساب</a>';
     } else {
-        echo '<div class="rk-grid">';
+        echo '<div class="blog-grid">';
         while ($query->have_posts()) {
             $query->the_post();
-            echo '<a class="rk-item" href="' . esc_url(get_permalink()) . '">';
-            echo '<h2>' . esc_html(get_the_title()) . '</h2>';
+            echo '<a class="bcard" href="' . esc_url(get_permalink()) . '">';
+            echo '<div class="bimg"><i class="fas fa-magnifying-glass"></i></div><div class="bbody">';
+            echo '<h3>' . esc_html(get_the_title()) . '</h3>';
             echo '<p>' . esc_html(wp_trim_words(wp_strip_all_tags(get_the_excerpt() ?: get_the_content()), 24)) . '</p>';
-            echo '</a>';
+            echo '<span class="bread">اقرأ المزيد</span></div></a>';
         }
         echo '</div>';
         wp_reset_postdata();
     }
-    echo '</div></div>';
+    echo '</div></section>';
     rukn_kw_shell_end();
 }
 
@@ -356,8 +568,10 @@ function rukn_kw_render_blog()
 {
     status_header(200);
     rukn_kw_shell_start('المدونة | ركن التطور الكويت');
-    echo '<div class="rk-wrap"><div class="rk-card"><h1>المدونة</h1>';
-    echo '<p>مقالات ونصائح عملية لخدمات المنزل في الكويت.</p></div>';
+    echo '<section class="phero compact"><div class="wrap">';
+    echo '<div class="crumb"><a href="' . esc_url(rukn_kw_abs('/kw/')) . '">الرئيسية</a> / المدونة</div>';
+    echo '<h1>مدونة ركن التطور — نصائح لخدمات المنزل في الكويت</h1>';
+    echo '<p class="psub">مقالات ونصائح عملية لخدمات المنزل في محافظات الكويت.</p></div></section>';
     $paged = max(1, (int) get_query_var('paged'), (int) get_query_var('page'));
     $query = new WP_Query(array(
         'post_type'      => 'post',
@@ -365,21 +579,24 @@ function rukn_kw_render_blog()
         'posts_per_page' => 12,
         'paged'          => $paged,
     ));
-    echo '<div class="rk-grid">';
+    echo '<section class="sec"><div class="wrap"><div class="blog-grid">';
+    $first = true;
     while ($query->have_posts()) {
         $query->the_post();
-        echo '<a class="rk-item" href="' . esc_url(get_permalink()) . '">';
-        echo '<h2>' . esc_html(get_the_title()) . '</h2>';
+        $feat = $first ? ' featured' : '';
+        $first = false;
+        echo '<a class="bcard' . $feat . '" href="' . esc_url(get_permalink()) . '">';
+        echo '<div class="bimg"><i class="fas fa-book-open"></i></div><div class="bbody">';
+        echo '<h3>' . esc_html(get_the_title()) . '</h3>';
         echo '<p>' . esc_html(wp_trim_words(wp_strip_all_tags(get_the_excerpt() ?: get_the_content()), 22)) . '</p>';
-        echo '</a>';
+        echo '<span class="bread">اقرأ المزيد</span></div></a>';
     }
-    echo '</div>';
-    echo '<div class="rk-wrap" style="padding:24px 0">';
+    echo '</div><div class="pager">';
     echo paginate_links(array(
         'total'   => $query->max_num_pages,
         'current' => $paged,
     ));
-    echo '</div>';
+    echo '</div></div></section>';
     wp_reset_postdata();
     rukn_kw_shell_end();
 }
@@ -396,7 +613,7 @@ function rukn_kw_language_attributes($out)
 add_action('wp_head', 'rukn_kw_head_meta', 1);
 function rukn_kw_head_meta()
 {
-    echo "\n<!-- rukn-kw-fixpack-20260917e -->\n";
+    echo "\n<!-- rukn-kw-fixpack-20260923e -->\n";
 }
 
 add_action('wp_head', 'rukn_kw_hide_call_css', 99);
@@ -405,9 +622,13 @@ function rukn_kw_hide_call_css()
     echo '<style id="rukn-kw-hide-call">
     a[href^="tel:"],
     a[href*="tel:+971"],
+    a[href="#rukn-no-call"],
     .btn-call, .call-btn, .rukn-call, [data-rukn-call],
+    .fab-call, .fab-btn.fab-call, .header-call, .footer-call,
     .fcontact a[href^="tel:"], header a[href^="tel:"],
-    a.phone, .phone-btn, .header-call, .footer-call { display:none !important; }
+    a.phone, .phone-btn { display:none !important; }
+    .kw-svg{width:100%;max-width:340px}
+    .kw-svg path{fill:rgba(255,255,255,.10);stroke:#4FA8FF;stroke-width:2.5}
     </style>';
 }
 
@@ -417,6 +638,11 @@ function rukn_kw_buffer_start()
     if (is_admin() || wp_doing_ajax()) {
         return;
     }
+    static $started = false;
+    if ($started) {
+        return;
+    }
+    $started = true;
     ob_start('rukn_kw_buffer_filter');
 }
 
@@ -425,19 +651,12 @@ function rukn_kw_buffer_filter($html)
     if (!is_string($html) || $html === '') {
         return $html;
     }
-    $html = str_replace('https://rukn-eltatawer.com/kw/kw/', 'https://rukn-eltatawer.com/kw/', $html);
-    $html = str_replace('https://www.rukn-eltatawer.com/kw/kw/', 'https://rukn-eltatawer.com/kw/', $html);
-    $html = str_replace('اختر الإمارة', 'اختر المحافظة', $html);
-    $html = str_replace('[[عدد المشاريع]]', '1248', $html);
-    $html = str_replace('[[سنة التأسيس]]', '2026', $html);
-    $html = str_replace('maps.google.com/maps?q=Dubai,United+Arab+Emirates', 'maps.google.com/maps?q=Kuwait+City,Kuwait', $html);
-    $html = str_replace('دبي، الإمارات العربية المتحدة', 'مدينة الكويت، الكويت', $html);
-    $html = str_replace('http://rukn-eltatawer.com/', 'https://rukn-eltatawer.com/', $html);
-    $html = str_replace('<h1>services</h1>', '<h1>الخدمات</h1>', $html);
-    $html = str_replace('<h1>reviews</h1>', '<h1>تقييمات العملاء</h1>', $html);
-    $html = str_replace('<h1>faqs</h1>', '<h1>الأسئلة الشائعة</h1>', $html);
-    $html = str_replace('<h1>pricing</h1>', '<h1>الأسعار</h1>', $html);
-    $html = str_replace('<h1>portfolio</h1>', '<h1>أعمالنا</h1>', $html);
+    $html = rukn_kw_scrub_uae_copy($html);
+    $html = rukn_kw_replace_parent_icons($html);
+    $html = rukn_kw_replace_uae_map($html);
+    $html = str_replace(' rel="nofollow noopener noreferrer" rel="noopener"', ' rel="nofollow noopener noreferrer"', $html);
+    $html = preg_replace('~<root(\s|>)~i', '<div$1', $html);
+    $html = preg_replace('~</root>~i', '</div>', $html);
     $html = preg_replace('~<script type="application/ld\+json">\{[^{}]*"@type": "LocalBusiness"[^<]*\}</script>~s', '', $html);
     $html = preg_replace('~href="tel:[^"]+"~', 'href="#rukn-no-call"', $html);
     $html = preg_replace('~\+971[\s\-]*58[\s\-]*663[\s\-]*4710~', '', $html);
