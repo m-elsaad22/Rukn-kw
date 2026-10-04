@@ -2,6 +2,19 @@ if (!defined('ABSPATH')) {
  return;
 }
 
+add_filter('pll_check_browser_language', '__return_false');
+add_filter('pre_option_kayan_currency', 'rukn_kw_kwd');
+add_filter('pre_option_currency', 'rukn_kw_kwd');
+add_filter('pre_option_kayan_tax_rate', 'rukn_kw_tax0');
+function rukn_kw_kwd($v)
+{
+ return 'KWD';
+}
+function rukn_kw_tax0($v)
+{
+ return '0';
+}
+
 add_action('wp_head', 'rukn_kw_head_min', 1);
 function rukn_kw_head_min()
 {
@@ -11,7 +24,7 @@ function rukn_kw_head_min()
  $is_en = (bool) preg_match('#/kw/en(/|$)#', $path);
  if (function_exists('is_front_page') && is_front_page() && !is_paged() && !$is_en) {
   $desc = 'شركة ركن التطور للخدمات المنزلية في الكويت: كشف تسربات، عزل، تكييف، سباكة، تنظيف ومكافحة حشرات في كل المحافظات. أسعار بالدينار الكويتي بعد المعاينة. تواصل عبر واتساب.';
- } elseif ($is_en && function_exists('is_front_page') && is_front_page()) {
+ } elseif ($is_en && (preg_match('#/kw/en/?$#', $path) || (function_exists('is_page') && is_page(3819)))) {
   $desc = 'Rukn El Tatawer home services in Kuwait. Quotes in KWD after inspection. WhatsApp the Kuwait desk.';
  } elseif (function_exists('is_singular') && is_singular()) {
   $id = get_queried_object_id();
@@ -24,8 +37,7 @@ function rukn_kw_head_min()
  if (function_exists('mb_substr')) {
   $desc = mb_substr($desc, 0, 160);
  }
- $url = home_url(add_query_arg(array(), $GLOBALS['wp']->request ?? ''));
- $url = preg_replace('~^https://rukn-eltatawer\.com/kw~', 'https://www.rukn-eltatawer.com/kw', (string) $url);
+ $url = rukn_kw_canonical('');
  echo '<title>' . esc_html($title) . '</title>' . "\n";
  if ($desc !== '') {
   echo '<meta name="description" content="' . esc_attr($desc) . '">' . "\n";
@@ -33,20 +45,58 @@ function rukn_kw_head_min()
  }
  echo '<meta property="og:title" content="' . esc_attr($title) . '">' . "\n";
  echo '<meta property="og:url" content="' . esc_url($url) . '">' . "\n";
+ echo '<link rel="canonical" href="' . esc_url($url) . '">' . "\n";
+ $pairs = rukn_kw_hreflang_pair($path);
+ if ($pairs) {
+  echo '<link rel="alternate" hreflang="ar" href="' . esc_url($pairs[0]) . '">' . "\n";
+  echo '<link rel="alternate" hreflang="en" href="' . esc_url($pairs[1]) . '">' . "\n";
+  echo '<link rel="alternate" hreflang="x-default" href="' . esc_url($pairs[0]) . '">' . "\n";
+ }
+ echo '<style id="rukn-kw-hide-tel">a[href^="tel:"]{display:none!important}</style>' . "\n";
 }
 
-add_action('parse_request', 'rukn_kw_parse_en', 1);
-function rukn_kw_parse_en($wp)
+function rukn_kw_hreflang_pair($path)
 {
- if (is_admin()) {
-  return;
- }
- $path = (string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
- if (!preg_match('#/kw/en(/|$)#', $path)) {
-  return;
- }
- $rel = trim((string) preg_replace('#^.*?/kw/en/?#', '', $path), '/');
+ $norm = '/' . trim((string) $path, '/') . '/';
+ $norm = preg_replace('~/+~', '/', $norm);
+ $ar = 'https://www.rukn-eltatawer.com/kw/';
+ $en = 'https://www.rukn-eltatawer.com/kw/en/';
  $map = array(
+  '/kw/' => array($ar, $en),
+  '/kw/en/' => array($ar, $en),
+  '/kw/about-us/' => array($ar . 'about-us/', $en . 'about/'),
+  '/kw/en/about/' => array($ar . 'about-us/', $en . 'about/'),
+  '/kw/contact-us/' => array($ar . 'contact-us/', $en . 'contact/'),
+  '/kw/en/contact/' => array($ar . 'contact-us/', $en . 'contact/'),
+  '/kw/privacy-policy/' => array($ar . 'privacy-policy/', $en . 'privacy/'),
+  '/kw/en/privacy/' => array($ar . 'privacy-policy/', $en . 'privacy/'),
+  '/kw/en/services/' => array($ar, $en . 'services/'),
+  '/kw/en/service/' => array($ar, $en),
+ );
+ return isset($map[$norm]) ? $map[$norm] : ($norm === '/kw/' || strpos($norm, '/kw/en/') === 0 ? array($ar, $en) : null);
+}
+
+add_filter('rank_math/frontend/canonical', 'rukn_kw_canonical', 99);
+add_filter('get_canonical_url', 'rukn_kw_canonical', 99);
+function rukn_kw_canonical($url)
+{
+ $path = (string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
+ $path = preg_replace('~/+~', '/', '/' . trim($path, '/') . '/');
+ if (preg_match('#^/kw/en(/|$)#', $path)) {
+  return 'https://www.rukn-eltatawer.com' . $path;
+ }
+ $url = is_string($url) ? $url : '';
+ $url = preg_replace('~^https://rukn-eltatawer\.com/kw~', 'https://www.rukn-eltatawer.com/kw', $url);
+ if ($url === '' || $url === 'https://www.rukn-eltatawer.com/kw/') {
+  return 'https://www.rukn-eltatawer.com' . ($path === '//' ? '/kw/' : $path);
+ }
+ return $url;
+}
+
+function rukn_kw_en_map()
+{
+ return array(
+  '' => 3819,
   'about' => 3821,
   'about-us' => 3821,
   'about-us-2' => 3821,
@@ -81,6 +131,20 @@ function rukn_kw_parse_en($wp)
   'service/jahra' => 3869,
   'service/mubarak-al-kabeer' => 3871,
  );
+}
+
+add_action('parse_request', 'rukn_kw_parse_en', 1);
+function rukn_kw_parse_en($wp)
+{
+ if (is_admin()) {
+  return;
+ }
+ $path = (string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
+ if (!preg_match('#/kw/en(/|$)#', $path)) {
+  return;
+ }
+ $rel = trim((string) preg_replace('#^.*?/kw/en/?#', '', $path), '/');
+ $map = rukn_kw_en_map();
  if (isset($map[$rel])) {
   $wp->query_vars = array('page_id' => (int) $map[$rel]);
  }
@@ -145,6 +209,20 @@ function rukn_kw_buffer_glue_cb($html)
  $html = str_replace('m@rukn-eltatawer.comالتغطية', 'm@rukn-eltatawer.com التغطية', $html);
  $html = str_replace('الكويتالبريد', 'الكويت البريد', $html);
  $html = str_replace('/kw/english/', '/kw/en/', $html);
+ $html = str_replace('"currency":"AED"', '"currency":"KWD"', $html);
+ $html = str_replace("'currency':'AED'", "'currency':'KWD'", $html);
+ $html = str_replace('data-currency="AED"', 'data-currency="KWD"', $html);
+ $html = str_replace('<small>AED</small>', '<small>KWD</small>', $html);
+ $html = str_replace('"taxRate":"5"', '"taxRate":"0"', $html);
+ $html = str_replace('"taxRate":5', '"taxRate":0', $html);
+ $html = preg_replace('~href="tel:\+971[^"]*"~', 'href="https://wa.me/971586634710"', $html);
+ $html = preg_replace('~"telephone"\s*:\s*"\+971[^"]*"~', '"telephone":""', $html);
+ $canon = rukn_kw_canonical('');
+ $html = preg_replace(
+  '~<link[^>]+rel=["\']canonical["\'][^>]*>~i',
+  '<link rel="canonical" href="' . esc_url($canon) . '">',
+  $html
+ );
  return $html;
 }
 
