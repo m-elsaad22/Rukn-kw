@@ -15,6 +15,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from kw_builder import build
 from kw_cities import parse_slug
+from kw_service_facts import FACTS, family_of
 from wp_kw_client import rest, cli
 
 CTX = ssl.create_default_context()
@@ -124,6 +125,16 @@ def main():
         action="store_true",
         help="Do not overwrite Rank Math / document titles (keep rental listing titles).",
     )
+    ap.add_argument(
+        "--families",
+        default="",
+        help="Comma-separated service families to include (pest,ac,garden,moving,ship,paint).",
+    )
+    ap.add_argument(
+        "--slug-contains",
+        default="",
+        help="Also include slugs containing this substring (e.g. diesel).",
+    )
     args = ap.parse_args()
 
     posts, cat = load_catalog()
@@ -135,6 +146,16 @@ def main():
         selected = [p for i, p in enumerate(selected) if i % args.shards == args.shard]
     if args.only_slug_prefix:
         selected = [p for p in selected if p["post_name"].startswith(args.only_slug_prefix)]
+    if args.families or args.slug_contains:
+        fams = {x.strip() for x in args.families.split(",") if x.strip()}
+        needle = args.slug_contains.strip().lower()
+        filtered = []
+        for p in selected:
+            svc, _city = parse_slug(p["post_name"])
+            fam = (FACTS.get(svc) or {}).get("family") or family_of(svc)
+            if (fams and fam in fams) or (needle and needle in p["post_name"].lower()):
+                filtered.append(p)
+        selected = filtered
     if args.limit:
         selected = selected[: args.limit]
 
