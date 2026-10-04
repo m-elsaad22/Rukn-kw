@@ -82,9 +82,9 @@ def patch_menus():
         have = set()
     for title, url in (
         ("Home", f"{ORIGIN}/en/"),
-        ("About", f"{ORIGIN}/en/about-us-2/"),
+        ("About", f"{ORIGIN}/en/about/"),
         ("Services", f"{ORIGIN}/en/services/"),
-        ("Contact", f"{ORIGIN}/en/contact-us-2/"),
+        ("Contact", f"{ORIGIN}/en/contact/"),
         ("العربية", f"{ORIGIN}/"),
     ):
         if title in have:
