@@ -30,6 +30,13 @@ def main():
     ap.add_argument("--redo-done", action="store_true")
     ap.add_argument("--skip-existing", action="store_true")
     ap.add_argument("--verify-every", type=int, default=25)
+    ap.add_argument(
+        "--skip-seo-title",
+        action="store_true",
+        default=True,
+        help="Keep existing Rank Math titles (rental listing). Default on.",
+    )
+    ap.add_argument("--write-seo-title", action="store_false", dest="skip_seo_title")
     args = ap.parse_args()
 
     posts, cat = load_catalog()
@@ -57,11 +64,12 @@ def main():
                 "id": pid,
                 "excerpt": art["excerpt"],
                 "tags": art["tags"],
-                "rank_math_title": art["rank_math_title"],
                 "rank_math_description": art["rank_math_description"],
                 "rank_math_focus_keyword": art["rank_math_focus_keyword"],
                 "meta": art["meta"],
             }
+            if not args.skip_seo_title:
+                item["rank_math_title"] = art["rank_math_title"]
             apply_meta_batch([item])
             if args.verify_every and ok % args.verify_every == 0:
                 if not has_faq(pid):

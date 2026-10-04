@@ -156,6 +156,37 @@ CITY_SUFFIX = {
 }
 
 
+def city_note(city: dict, family: str = "", service_slug: str = "") -> str:
+    """Governorate sentence that matches the service — not a pasted water/building line."""
+    slug = (service_slug or "").lower()
+    fam = (family or "").lower()
+    buildings = city.get("buildings") or ""
+    climate = city.get("climate") or ""
+    access = city.get("access") or ""
+    water = city.get("water") or ""
+    if fam == "pest" or any(x in slug for x in ("pest", "insect", "termite", "cockroach", "bed-bug", "ant", "rodent")):
+        return f"{climate} أماكن الاختباء تختلف حسب المبنى: {buildings}"
+    if "diesel" in slug:
+        return f"{access} نقرأ خزان الديزل من موقعه وتهويته، لا من ضغط مياه البيت."
+    if fam == "ac" or any(x in slug for x in ("ac-", "-ac", "duct", "split-ac", "central-ac")):
+        return climate
+    if fam in ("garden", "solar") or ("pool" in slug and "pest" not in slug):
+        return f"{climate} {access}"
+    if fam in ("moving", "ship"):
+        return access
+    water_slug = any(
+        x in slug
+        for x in ("water", "plumb", "leak", "tank", "heater", "pump", "drain", "sewage")
+    )
+    if "diesel" not in slug and (fam in ("leaks", "elec") or water_slug):
+        return water
+    if fam == "cleaning" and any(x in slug for x in ("tank", "bathroom", "kitchen", "pool")):
+        return water
+    if fam in ("paint", "reno", "install"):
+        return f"{buildings} {climate}"
+    return buildings
+
+
 def parse_slug(slug: str):
     for key in (
         "mubarak-al-kabeer",

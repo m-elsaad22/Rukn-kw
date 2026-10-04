@@ -119,6 +119,11 @@ def main():
     ap.add_argument("--progress-file", default="")
     ap.add_argument("--skip-meta", action="store_true")
     ap.add_argument("--meta-only", action="store_true")
+    ap.add_argument(
+        "--skip-seo-title",
+        action="store_true",
+        help="Do not overwrite Rank Math / document titles (keep rental listing titles).",
+    )
     args = ap.parse_args()
 
     posts, cat = load_catalog()
@@ -146,17 +151,17 @@ def main():
             if not args.meta_only:
                 update_content(pid, art["html"], art["excerpt"])
             if not args.skip_meta:
-                pending_meta.append(
-                    {
-                        "id": pid,
-                        "excerpt": art["excerpt"],
-                        "tags": art["tags"],
-                        "rank_math_title": art["rank_math_title"],
-                        "rank_math_description": art["rank_math_description"],
-                        "rank_math_focus_keyword": art["rank_math_focus_keyword"],
-                        "meta": art["meta"],
-                    }
-                )
+                item = {
+                    "id": pid,
+                    "excerpt": art["excerpt"],
+                    "tags": art["tags"],
+                    "rank_math_description": art["rank_math_description"],
+                    "rank_math_focus_keyword": art["rank_math_focus_keyword"],
+                    "meta": art["meta"],
+                }
+                if not args.skip_seo_title:
+                    item["rank_math_title"] = art["rank_math_title"]
+                pending_meta.append(item)
             if args.skip_meta:
                 done.add(pid)
             ok += 1

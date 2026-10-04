@@ -5,7 +5,7 @@ import hashlib
 import re
 from html import escape
 
-from kw_cities import CITIES, parse_slug
+from kw_cities import CITIES, city_note, parse_slug
 from kw_family_copy import family_sections
 from kw_service_facts import FACTS, family_of
 from kw_unique_bank import depth_blocks, inspection_list, city_essays
@@ -114,7 +114,7 @@ def build(post: dict, catalog: dict) -> dict:
     slug = post["post_name"]
     title = post["post_title"]
     service_slug, city_key = parse_slug(slug)
-    city = CITIES[city_key]
+    city = dict(CITIES[city_key])
     spec = FACTS.get(service_slug)
     if not spec:
         spec = {
@@ -139,6 +139,7 @@ def build(post: dict, catalog: dict) -> dict:
     who = "الفني المختص" if tech else "فريق التنفيذ"
     company_line = f"{who} لدى {COMPANY}"
     fam = spec.get("family") or family_of(service_slug)
+    city["water"] = city_note(city, fam, service_slug)
 
     intros = [
         f"{spec['problem']} هذا ما يدفع أغلب طلبات {noun} {city['in']}. {city['buildings']}.",
@@ -294,6 +295,7 @@ def build(post: dict, catalog: dict) -> dict:
         tech=tech,
         seed=seed,
         who=who,
+        service_slug=service_slug,
     )
 
     html = "\n".join(sections)
@@ -457,7 +459,7 @@ def _faqs(kw, noun, city, spec, areas, tech, seed):
     return out[:12]
 
 
-def _city_scenario(noun, city, city_key, spec, areas, outline):
+def _city_scenario(noun, city, city_key, spec, areas, outline, fam="", service_slug=""):
     stories = {
         "kuwait": (
             f"يوم عمل {noun} بين الوسط والأبراج",
@@ -499,6 +501,9 @@ def _city_scenario(noun, city, city_key, spec, areas, outline):
     h, p1, p2, p3 = stories.get(city_key, stories["kuwait"])
     if outline % 2:
         p1, p2 = p2, p1
+    slug = (service_slug or "").lower()
+    if fam in ("pest", "moving", "ship", "paint") or "diesel" in slug:
+        p3 = city["water"]
     return [f"<h2>{escape(h)}</h2><p>{escape(p1)}</p><p>{escape(p2)}</p><p>{escape(p3)}</p>"]
 
 
@@ -677,7 +682,9 @@ def _compose_sections(**k):
     family = family_sections(
         k["fam"], k["noun"], k["city"], k["spec"], k["areas"], k["outline"], k["seed"]
     )
-    scenario = _city_scenario(k["noun"], k["city"], k["city_key"], k["spec"], k["areas"], k["outline"])
+    scenario = _city_scenario(
+        k["noun"], k["city"], k["city_key"], k["spec"], k["areas"], k["outline"], k["fam"], k.get("service_slug") or ""
+    )
     depth = depth_blocks(
         k["outline"], k["noun"], k["city"], k["spec"], k["areas"], k["who"], k["seed"]
     )
