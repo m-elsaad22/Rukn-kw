@@ -6,6 +6,7 @@ import re
 from html import escape
 
 from kw_cities import CITIES, city_note, parse_slug
+from kw_dna import faq_html, local_example, process_steps, read_building_tail, scenario_tail, service_deep_html, uses_water
 from kw_family_copy import family_sections
 from kw_service_facts import FACTS, family_of
 from kw_unique_bank import depth_blocks, inspection_list, city_essays
@@ -21,7 +22,6 @@ CITY_OUTLINE = {
 
 PHONE = "+971586634710"
 WA = "971586634710"
-TEL = "tel:+971586634710"
 WA_URL = "https://wa.me/971586634710"
 COMPANY = "ركن التطور"
 HOME = "https://rukn-eltatawer.com/kw/"
@@ -129,7 +129,7 @@ def build(post: dict, catalog: dict) -> dict:
             "icon": "fa-tools",
         }
     seed = _seed(post["ID"], slug, service_slug, city_key)
-    outline = CITY_OUTLINE.get(city_key, seed % 6)
+    outline = (seed + CITY_OUTLINE.get(city_key, 0)) % 6
     areas = _areas(city, seed, 4)
     areas_txt = "، ".join(areas[:4])
     noun = spec["noun"]
@@ -152,7 +152,7 @@ def build(post: dict, catalog: dict) -> dict:
     intro = intros[outline]
     direct = (
         f"{kw} تعني تنفيذ {noun} داخل {city['label']} بعد معاينة الموقع وكتابة النطاق قبل البدء. "
-        f"الخدمة تناسب {spec['audience']}. لا يُسعَّر العمل عبر وصف هاتفي فقط لأن {city['water']}"
+        f"الخدمة تناسب {spec['audience']}. لا يُسعَّر العمل عبر وصف هاتفي فقط لأن {city['water'] if uses_water(fam, service_slug) else city['buildings']}"
     )
 
     h2_what = [
@@ -187,17 +187,7 @@ def build(post: dict, catalog: dict) -> dict:
     ]
     sign_items = (spec["signs"][:] + extra_signs)[:7]
 
-    process = [
-        (f"توضيح الحالة في {city['name']}", f"نستلم الوصف أو صورة لتحديد إن كانت الزيارة في {areas[0]} كافية أم تحتاج تجهيزاً."),
-        ("معاينة مكتوبة", f"نوثق الخامة والوصول و{city['water']} قبل اختيار الأداة."),
-        ("تحديد النطاق", f"نكتب ما سيُنفَّذ وما لن يُنفَّذ حتى لا يتوسع العمل أثناء الزيارة في {city['label']}."),
-        ("التنفيذ حسب الخامة", f"الأدوات المستخدمة تشمل: {'، '.join(spec['tools'][:4]) }."),
-        ("مراجعة التسليم", f"تُغلق الزيارة بعد معاينتك للنتيجة في {areas[1]}."),
-    ]
-    if outline in (1, 4):
-        process[0], process[1] = process[1], process[0]
-    if outline in (2, 5):
-        process.append(("متابعة إن لزم", f"بعض حالات {noun} تحتاج زيارة تحقق بعد استقرار الخامة أو الطقس في {city['name']}."))
+    process = process_steps(noun, city, spec, areas, fam, service_slug, outline)
 
     cost_rows = [
         ("نوع الخدمة ونطاق الغرف أو الوحدات", f"يختلف {noun} بين نقطة واحدة ومسار كامل داخل {city['label']}."),
@@ -238,7 +228,7 @@ def build(post: dict, catalog: dict) -> dict:
         f"اذكر عمر التمديدات أو آخر صيانة لـ{noun} إن وُجدت.",
         f"في {city['label']} أخبرنا عن موقف السيارات أو الحارس قبل الوصول.",
         f"لا تخلط مواد تنظيف أو كيماويات قبل وصول {who}.",
-        city["water"],
+        city["water"] if uses_water(fam, service_slug) else city["climate"],
         f"إن كانت الحالة قرب الكهرباء أو الغاز نؤمّن أولاً ثم نحدد باقي {noun}.",
     ]
     tip = _pick(seed, tips)
@@ -246,14 +236,14 @@ def build(post: dict, catalog: dict) -> dict:
         seed,
         [
             f"التجارب العشوائية قد تخفي مصدر {noun} وتوسّع الضرر خصوصاً مع الرطوبة أو الكهرباء.",
-            f"لا تستخدم ضغط ماء عالياً أو مواد كاوية قبل معرفة خامة السطح في {city['name']}.",
+            f"لا تستخدم مواداً كاوية أو تجربة عشوائية قبل معرفة خامة السطح في {city['name']}.",
             f"العمل على ارتفاع أو غاز أو لوحة كهرباء ليس تجربة منزلية.",
             f"تأجيل {noun} مع {city['climate']} يجعل الإصلاح أوسع لا أرخص.",
         ],
         outline,
     )
 
-    faqs = _faqs(kw, noun, city, spec, areas, tech, seed)
+    faqs = _faqs(kw, noun, city, spec, areas, tech, seed, fam, service_slug)
     features = _features(noun, city, spec, seed)
     steps_meta = [{"title": a, "content": b} for a, b in process]
     price_items = [{"title": a, "value": b} for a, b in cost_rows]
@@ -296,6 +286,7 @@ def build(post: dict, catalog: dict) -> dict:
         seed=seed,
         who=who,
         service_slug=service_slug,
+        faqs=faqs,
     )
 
     html = "\n".join(sections)
@@ -422,10 +413,11 @@ def _features(noun, city, spec, seed):
     return items
 
 
-def _faqs(kw, noun, city, spec, areas, tech, seed):
+def _faqs(kw, noun, city, spec, areas, tech, seed, fam="", service_slug=""):
     who = "الفني" if tech else "فريق الخدمة"
     s = spec["signs"]
     m = spec["mistakes"]
+    pricing_note = city["water"] if uses_water(fam, service_slug) else city["buildings"]
     base = [
         {"question": f"ما هي {kw}؟", "answer": f"هي تنفيذ {noun} داخل {city['label']} بعد معاينة توضح المصدر والنطاق. {spec['problem']}"},
         {"question": f"هل تغطون {areas[0]} و{areas[1]}؟", "answer": f"نعم ضمن {city['label']}. نؤكد إمكانية الوصول عند حجز الموعد لأن {city['access']}"},
@@ -435,7 +427,7 @@ def _faqs(kw, noun, city, spec, areas, tech, seed):
         {"question": "هل يمكن التنفيذ في نفس اليوم؟", "answer": "يعتمد على حجم العمل وجدول الفريق. الحالات التي تمس السلامة تُقدَّم في الترتيب."},
         {"question": f"ما الأدوات المستخدمة في {noun}؟", "answer": "، ".join(spec["tools"]) + "."},
         {"question": f"ما الأخطاء الشائعة قبل وصول {who}؟", "answer": m[0] + " " + m[1]},
-        {"question": "هل المعاينة قبل التسعير؟", "answer": f"نعم. {city['water']}"},
+        {"question": "هل المعاينة قبل التسعير؟", "answer": f"نعم. {pricing_note}"},
         {"question": "كيف أحجز؟", "answer": f"عبر الاتصال أو واتساب. اذكر {noun} ومنطقتك مثل {areas[0]} وصورة للنقطة إن أمكن."},
         {"question": f"هل يناسب {noun} {spec['audience']}؟", "answer": f"هذا هو الجمهور الأساسي. نوضح إن كانت الحالة تحتاج مساراً آخر أثناء المعاينة في {city['name']}."},
         {"question": f"ما الذي يميز العمل في {city['label']}؟", "answer": city["climate"] + " " + city["buildings"]},
@@ -443,6 +435,8 @@ def _faqs(kw, noun, city, spec, areas, tech, seed):
         {"question": f"أين يظهر {noun} أكثر داخل البيت؟", "answer": f"حسب الخدمة: قد يبدأ من {s[2]} ثم يمتد. المعاينة في {areas[2] if len(areas)>2 else city['name']} تربط العرض بالمصدر."},
         {"question": f"هل تعملون في {areas[3] if len(areas)>3 else city['name']}؟", "answer": f"نعم ضمن تغطية {city['label']} بعد تأكيد الموعد والوصول."},
         {"question": "هل تستخدمون ضمانات أو تقييمات عامة في الصفحة؟", "answer": "لا نضع تقييماً مخترعاً ولا نسبة نجاح عامة. نلتزم بما نعاينه ونكتبه."},
+        {"question": f"ما أول علامة تجعل {noun} ضرورياً؟", "answer": f"{s[0]} إذا تكرر أو اجتمع مع {s[1]} داخل {city['name']}."},
+        {"question": f"هل {spec['types'][0]} هو المسار الوحيد؟", "answer": f"لا. المسارات المحتملة: {'، '.join(spec['types'])}. نختار واحداً مكتوباً بعد المعاينة."},
     ]
     n = 9 + (seed % 4)
     start = seed % len(base)
@@ -465,49 +459,47 @@ def _city_scenario(noun, city, city_key, spec, areas, outline, fam="", service_s
             f"يوم عمل {noun} بين الوسط والأبراج",
             f"في {areas[0]} قد يكون المدخل التجاري أضيق من بيت في {areas[1]}. الأبراج تحتاج تنسيق المصعد، والبيوت القديمة قد تخفي تمديدات تحت طبقات تشطيب.",
             f"الرطوبة الساحلية تجعل الزجاج والمكيف الخارجي جزءاً من قراءة الموقع حتى لو كان طلبك {noun} لغرفة داخلية. {spec['problem']}",
-            f"الضغط بين الأدوار يغيّر تشخيص الماء والكهرباء. لذلك لا ننسخ زمن التنفيذ من ضاحية هادئة إلى الشرق في ساعة الذروة.",
+            f"{city['access']} لذلك لا ننسخ زمن التنفيذ من ضاحية هادئة إلى الشرق في ساعة الذروة.",
         ),
         "hawalli": (
             f"{noun} في كثافة السالمية وحولي",
             f"الشقة في {areas[0]} تستقبل غبار الممر أسرع من فيلا في {areas[1]}. الواجهة البحرية تسرّع تآكل الألمنيوم إن كانت الخدمة تمسه.",
             f"الزحام ظهراً يجعل نافذة الدخول جزءاً من الاتفاق لا تفصيلاً ثانوياً. {spec['problem']}",
-            f"مضخات العمائر شائعة؛ أي ضعف فيها يظهر على السباكة والسخان حتى لو كان الطلب {noun} لغرفة واحدة.",
+            f"{city['buildings']}",
         ),
         "farwaniya": (
             f"{noun} بين العمائر والمحلات في الفروانية",
             f"الحركة اليومية في {areas[0]} تعيد الغبار أسرع من بيت أهدأ في {areas[1]}. المحل الأرضي قد يحتاج عملاً بعد الإغلاق.",
-            f"شبكات أقدم في بعض البيوت تجعل التسرب أو ضعف الضغط يظهر متأخراً. {spec['problem']}",
-            f"الغبار الداخلي أعلى من الساحل؛ لذلك تجفيف الخامات وحماية الدهان جزء من قراءة الموقع.",
+            f"{city['buildings']} {spec['problem']}",
+            f"الغبار الداخلي أعلى من الساحل؛ لذلك تجفيف الخامات وحماية النتيجة جزء من قراءة الموقع.",
         ),
         "mubarak-al-kabeer": (
             f"{noun} في فلل الضواحي بمبارك الكبير",
-            f"الأحواش والملاحق في {areas[0]} تضيف نقاط فحص لا تظهر في شقة. السطح والخزان غالباً أقرب للعمل من وسط المدينة.",
-            f"الوقوف أسهل غالباً، لكن الحوش الترابي والغبار يصلان للمكيفات بسرعة. {spec['problem']}",
+            f"الأحواش والملاحق في {areas[0]} تضيف نقاط فحص لا تظهر في شقة. السطح والجلسة الخارجية أقرب للعمل من وسط المدينة.",
+            f"الوقوف أسهل غالباً، لكن الحوش الترابي والغبار يصلان للوحدات الخارجية بسرعة. {spec['problem']}",
             f"في {areas[1]} قد نجمع الملحق مع البيت في نفس المعاينة إذا كان المصدر مشتركاً.",
         ),
         "al-ahmadi": (
             f"{noun} بين الساحل والمساحات في الأحمدي",
             f"الواجهة في {areas[0]} قد تكون أملح من بيت داخلي في {areas[1]}. المسافات أطول؛ نؤكد نافذة اليوم لا وعداً فضفاضاً.",
-            f"الأسطح الكبيرة والخزانات جزء متكرر من الفحص حتى لو بدأ الطلب من غرفة. {spec['problem']}",
-            f"المضخات المنزلية شائعة، والضغط صيفاً يغيّر شكل العطل في الأدوار العلوية.",
+            f"الأسطح الكبيرة جزء متكرر من الفحص حتى لو بدأ الطلب من غرفة. {spec['problem']}",
+            f"{city['access']}",
         ),
         "al-jahra": (
             f"{noun} مع الغبار والمساحات في الجهراء",
-            f"الغبار الصحراوي في {areas[0]} يلتصق بالدكت والخزان والستائر أكثر من الساحل. المسافة من العاصمة تجعل تأكيد صباح التنفيذ أوضح.",
+            f"الغبار الصحراوي في {areas[0]} يلتصق بالدكت والستائر والملاحق أكثر من الساحل. المسافة من العاصمة تجعل تأكيد صباح التنفيذ أوضح.",
             f"الأحواش والملاحق نقاط إخفاء للحشرات أو للرمل حول الفتحات. {spec['problem']}",
-            f"الخزان السطحي وفتحته جزء ثابت من المعاينة إذا كانت الخدمة تمس الماء أو السطح في {areas[1]}.",
+            f"{city['climate']}",
         ),
     }
-    h, p1, p2, p3 = stories.get(city_key, stories["kuwait"])
+    h, p1, p2, _unused = stories.get(city_key, stories["kuwait"])
     if outline % 2:
         p1, p2 = p2, p1
-    slug = (service_slug or "").lower()
-    if fam in ("pest", "moving", "ship", "paint") or "diesel" in slug:
-        p3 = city["water"]
+    p3 = scenario_tail(noun, city, city_key, spec, areas, fam, service_slug)
     return [f"<h2>{escape(h)}</h2><p>{escape(p1)}</p><p>{escape(p2)}</p><p>{escape(p3)}</p>"]
 
 
-def _long_unique_blocks(noun, city, spec, outline, areas_txt, company_line, seed):
+def _long_unique_blocks(noun, city, spec, outline, areas_txt, company_line, seed, fam="", service_slug=""):
     parts = [x.strip() for x in areas_txt.split("، ") if x.strip()]
     while len(parts) < 3:
         parts.append(city["name"])
@@ -515,6 +507,8 @@ def _long_unique_blocks(noun, city, spec, outline, areas_txt, company_line, seed
     tools = "، ".join(spec["tools"])
     types = "، ".join(spec["types"])
     audience = spec["audience"]
+    read_tail = read_building_tail(fam, service_slug, noun)
+    site_note = city["water"] if uses_water(fam, service_slug) else city["buildings"]
     headings = [
         f"الأدوات والخامات المستخدمة في {noun}",
         f"تأثير مناخ {city['name']} على {noun}",
@@ -522,7 +516,7 @@ def _long_unique_blocks(noun, city, spec, outline, areas_txt, company_line, seed
         f"حدود الحل المنزلي أمام {noun}",
         f"السلامة أثناء {noun}",
         f"بعد التسليم: كيف تحافظ على نتيجة {noun}؟",
-        f"لمن تناسب الخدمة ولمن لا تناسب؟",
+        f"لمن تناسب {noun} ولمن لا تناسب؟",
         f"كيف نقرأ المبنى قبل بدء {noun}؟",
     ]
     bodies = [
@@ -533,9 +527,13 @@ def _long_unique_blocks(noun, city, spec, outline, areas_txt, company_line, seed
         f"<p>نمنع دخول الأطفال والحيوانات إلى منطقة العمل إن وُجدت مواد أو كهرباء مكشوفة. في الحوش أو السطح نراعي الحرارة والغبار. أي تصريف ماء يُوجَّه بعيداً عن الكهرباء.</p><p>إذا ظهرت حاجة لإغلاق المحبس أو القاطع نخبرك قبل التنفيذ لا بعده.</p>",
         f"<p>بعد التسليم نشرح ما الذي تراقبه في الأيام التالية حسب نوع {escape(noun)}: عودة الرطوبة، ضعف التبريد، عودة الحشرة، أو تقشر الدهان. المتابعة موعد يُذكر إن كانت الحالة تستدعيه وليست شعاراً عاماً.</p><p>في {escape(a2)} نذكّر بتأثير الغبار أو الرطوبة الساحلية على عمر النتيجة إن كان ذلك مرتبطاً بالخدمة.</p>",
         f"<p>الخدمة موجّهة أساساً إلى {escape(audience)}. إن كانت الحالة خارج نطاق {escape(noun)} نوضح ذلك بدل توسيع العمل صامتاً. المسارات المحتملة داخل المعاينة: {escape(types)}.</p><p>لا ننفّذ كل مسار في كل زيارة. الجدول يوضح متى يُطرح كل مسار داخل {escape(city['label'])}.</p>",
-        f"<p>ننظر إلى عمر التشطيب، وعدد المستخدمين، وموقع العطل الظاهر، وسهولة فتح الأسقف أو الخزائن. {escape(city['water'])}</p><p>هذه القراءة تمنع اختيار مادة تخدش الرخام أو عزل يخفي رطوبة نشطة أو تمديداً يزيد الحمل على لوحة ضعيفة.</p>",
+        f"<p>ننظر إلى عمر التشطيب، وعدد المستخدمين، وموقع العطل الظاهر، وسهولة فتح الأسقف أو الخزائن. {escape(site_note)}</p><p>{escape(read_tail)}</p>",
     ]
     picks = list(range(8))
+    off = seed % 8
+    picks = picks[off:] + picks[:off]
+    if seed % 2:
+        picks = list(reversed(picks))
     paras = [f"<h2>{escape(headings[i])}</h2>{bodies[i]}" for i in picks]
     extra_table = (
         '<div class="responsive-table"><table><thead><tr><th>البند</th><th>ماذا نفحص في الموقع</th></tr></thead><tbody>'
@@ -576,8 +574,8 @@ def _compose_sections(**k):
         f'<p class="hero-label">{escape(city["label"])} · {escape(noun)}</p>'
         f"<p>{escape(k['what_p'][:280])}</p>"
         '<p class="rukn-hero-actions">'
-        f'<a class="rukn-btn" href="{TEL}"><i class="fa-solid fa-phone"></i> اتصل الآن</a>'
         f'<a class="rukn-btn rukn-btn-wa" href="{WA_URL}"><i class="fa-brands fa-whatsapp"></i> واتساب</a>'
+        f'<a class="rukn-btn" href="{WA_URL}"><i class="fa-solid fa-comments"></i> اطلب المعاينة</a>'
         "</p></div>"
     )
     sections.append("[post_call]")
@@ -655,7 +653,7 @@ def _compose_sections(**k):
         f"<h2>العمل داخل {escape(city['label'])}</h2>",
         f"<p>التغطية تشمل {escape(k['areas_txt'])}. {escape(city['access'])}</p>",
         f"<p>{escape(city['buildings'])}</p>",
-        f"<p>مثال عملي: عمل في {escape(k['areas'][0])} قد يختلف عن {escape(k['areas'][1])} في الوقوف وارتفاع الخزان أو نوع الأرضية.</p>",
+        f"<p>{escape(local_example(k['fam'], k.get('service_slug') or '', k['areas'][0], k['areas'][1]))}</p>",
     ]
     block_rel = [
         f"<h2>خدمات مرتبطة بـ{escape(noun)}</h2>",
@@ -672,32 +670,45 @@ def _compose_sections(**k):
         '<p><i class="fa-solid fa-headset"></i></p>'
         f"<h2>هل تحتاج إلى {escape(noun)} في {escape(city['name'])}؟</h2>"
         f"<p>صف العطل أو أرسل صورة وسنحدد إن كانت الزيارة في {escape(city['name'])} كافية. لا نضع سعراً قبل المعاينة.</p>"
-        f'<p class="rukn-hero-actions"><a class="rukn-btn" href="{TEL}"><i class="fa-solid fa-phone"></i> اتصل الآن</a>'
-        f'<a class="rukn-btn rukn-btn-wa" href="{WA_URL}"><i class="fa-brands fa-whatsapp"></i> واتساب</a></p>'
+        f'<p class="rukn-hero-actions"><a class="rukn-btn rukn-btn-wa" href="{WA_URL}"><i class="fa-brands fa-whatsapp"></i> واتساب</a>'
+        f'<a class="rukn-btn" href="{WA_URL}"><i class="fa-solid fa-comments"></i> اطلب المعاينة</a></p>'
         "</div>",
     ]
     extra = _long_unique_blocks(
-        k["noun"], k["city"], k["spec"], k["outline"], k["areas_txt"], k["company_line"], k["seed"]
+        k["noun"], k["city"], k["spec"], k["outline"], k["areas_txt"], k["company_line"], k["seed"],
+        k["fam"], k.get("service_slug") or "",
     )
     family = family_sections(
-        k["fam"], k["noun"], k["city"], k["spec"], k["areas"], k["outline"], k["seed"]
+        k["fam"], k["noun"], k["city"], k["spec"], k["areas"], k["outline"], k["seed"],
+        k.get("service_slug") or "",
     )
     scenario = _city_scenario(
         k["noun"], k["city"], k["city_key"], k["spec"], k["areas"], k["outline"], k["fam"], k.get("service_slug") or ""
     )
     depth = depth_blocks(
-        k["outline"], k["noun"], k["city"], k["spec"], k["areas"], k["who"], k["seed"]
+        k["outline"], k["noun"], k["city"], k["spec"], k["areas"], k["who"], k["seed"],
+        k["fam"], k.get("service_slug") or "",
     )
-    checklist = [inspection_list(k["noun"], k["city"], k["spec"], k["areas"], k["seed"])]
-    essays = city_essays(k["outline"], k["noun"], k["city"], k["spec"], k["areas"], k["who"])
+    checklist = [inspection_list(
+        k["noun"], k["city"], k["spec"], k["areas"], k["seed"],
+        k["fam"], k.get("service_slug") or "",
+    )]
+    essays = city_essays(
+        k["outline"], k["noun"], k["city"], k["spec"], k["areas"], k["who"],
+        k["fam"], k.get("service_slug") or "",
+    )
+    faq_block = [faq_html(k.get("faqs") or [])]
+    deep = [service_deep_html(
+        k["noun"], k["city"], k["spec"], k["areas"], k["fam"], k.get("service_slug") or "", k["seed"]
+    )]
 
     order_map = {
-        0: [block_what, block_signs, extra, family, depth, essays, checklist, scenario, block_types, block_steps, block_cost, block_cmp, block_mist, block_local, block_rel, block_close],
-        1: [block_signs, block_what, block_steps, extra, depth, essays, checklist, family, block_types, scenario, block_local, block_cost, block_mist, block_cmp, block_rel, block_close],
-        2: [block_local, block_what, extra, scenario, depth, essays, family, checklist, block_types, block_steps, block_mist, block_cost, block_cmp, block_signs, block_rel, block_close],
-        3: [block_what, block_types, extra, block_signs, family, depth, essays, checklist, block_local, scenario, block_steps, block_cmp, block_cost, block_mist, block_rel, block_close],
-        4: [block_signs, extra, scenario, depth, essays, checklist, block_local, block_what, family, block_steps, block_cost, block_types, block_cmp, block_mist, block_rel, block_close],
-        5: [block_what, extra, family, depth, essays, checklist, block_local, block_signs, scenario, block_cmp, block_steps, block_types, block_mist, block_cost, block_rel, block_close],
+        0: [block_what, block_signs, extra, family, deep, depth, essays, checklist, scenario, block_types, block_steps, block_cost, block_cmp, block_mist, block_local, faq_block, block_rel, block_close],
+        1: [block_signs, block_what, block_steps, extra, deep, depth, essays, checklist, family, block_types, scenario, block_local, block_cost, faq_block, block_mist, block_cmp, block_rel, block_close],
+        2: [block_local, block_what, extra, scenario, deep, depth, essays, family, checklist, block_types, block_steps, block_mist, faq_block, block_cost, block_cmp, block_signs, block_rel, block_close],
+        3: [block_what, block_types, extra, block_signs, family, deep, depth, essays, checklist, block_local, scenario, block_steps, block_cmp, faq_block, block_cost, block_mist, block_rel, block_close],
+        4: [block_signs, extra, scenario, deep, depth, essays, checklist, block_local, block_what, family, block_steps, block_cost, faq_block, block_types, block_cmp, block_mist, block_rel, block_close],
+        5: [block_what, extra, family, deep, depth, essays, checklist, block_local, block_signs, scenario, faq_block, block_cmp, block_steps, block_types, block_mist, block_cost, block_rel, block_close],
     }
     for blk in order_map[k["outline"]]:
         sections.extend(blk)

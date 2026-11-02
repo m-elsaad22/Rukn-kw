@@ -178,7 +178,7 @@ def city_note(city: dict, family: str = "", service_slug: str = "") -> str:
         x in slug
         for x in ("water", "plumb", "leak", "tank", "heater", "pump", "drain", "sewage")
     )
-    if "diesel" not in slug and (fam in ("leaks", "elec") or water_slug):
+    if "diesel" not in slug and (fam == "leaks" or water_slug):
         return water
     if fam == "cleaning" and any(x in slug for x in ("tank", "bathroom", "kitchen", "pool")):
         return water

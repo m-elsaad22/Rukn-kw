@@ -37,10 +37,14 @@ def main():
         help="Keep existing Rank Math titles (rental listing). Default on.",
     )
     ap.add_argument("--write-seo-title", action="store_false", dest="skip_seo_title")
+    ap.add_argument("--batch-size", type=int, default=1)
+    ap.add_argument("--max-id", type=int, default=0, help="Skip posts with ID greater than this.")
     args = ap.parse_args()
 
     posts, cat = load_catalog()
     selected = posts[args.offset :]
+    if args.max_id:
+        selected = [p for p in selected if int(p["ID"]) <= args.max_id]
     if args.limit:
         selected = selected[: args.limit]
 
@@ -50,6 +54,7 @@ def main():
     failed = list(progress.get("failed") or [])
 
     ok = 0
+    pending = []
     for p in selected:
         pid = int(p["ID"])
         if pid in done:
@@ -70,16 +75,14 @@ def main():
             }
             if not args.skip_seo_title:
                 item["rank_math_title"] = art["rank_math_title"]
-            apply_meta_batch([item])
-            if args.verify_every and ok % args.verify_every == 0:
-                if not has_faq(pid):
-                    apply_meta_batch([item])
-                    if not has_faq(pid):
-                        raise RuntimeError("FAQ missing after retry")
-            done.add(pid)
-            ok += 1
-            print(f"META {ok} {pid} {p['post_name']}", flush=True)
-            if ok % 5 == 0:
+            pending.append((pid, p["post_name"], item))
+            if len(pending) >= max(1, args.batch_size):
+                apply_meta_batch([x[2] for x in pending], chunk=len(pending))
+                for pid2, slug2, _item in pending:
+                    done.add(pid2)
+                    ok += 1
+                    print(f"META {ok} {pid2} {slug2}", flush=True)
+                pending = []
                 progress["done"] = sorted(done)
                 progress["failed"] = failed
                 save_progress(progress, progress_path)
@@ -90,6 +93,13 @@ def main():
             save_progress(progress, progress_path)
             print(f"FAIL {pid} {p['post_name']}: {e}", flush=True)
             time.sleep(0.8)
+    if pending:
+        apply_meta_batch([x[2] for x in pending], chunk=len(pending))
+        for pid2, slug2, _item in pending:
+            done.add(pid2)
+            ok += 1
+            print(f"META {ok} {pid2} {slug2}", flush=True)
+        pending = []
 
     try:
         cli("option update rukn_kw_meta_apply 0")

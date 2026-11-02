@@ -90,19 +90,21 @@ def trigger_frontend_apply(post_id: int = 0):
         pass
 
 
-def apply_meta_batch(items: list):
-    """One post per option write — large batches time out before delete_option."""
+def apply_meta_batch(items: list, chunk: int = 1):
+    """Queue metabox payloads for the WPCode runtime. chunk>1 is faster; keep small if PHP times out."""
     if not items:
         return
     last_err = None
-    for item in items:
-        payload = {"items": [item]}
+    n = max(1, int(chunk or 1))
+    for i in range(0, len(items), n):
+        part = items[i : i + n]
+        payload = {"items": part}
         b64 = _safe_b64(payload)
         r = cli(f"option update rukn_kw_meta_apply {b64}")
         if isinstance(r, dict) and r.get("exit_code", 0) not in (0, None, "0"):
             last_err = RuntimeError(str(r)[:500])
             continue
-        trigger_frontend_apply(int(item.get("id") or 0))
+        trigger_frontend_apply(int(part[0].get("id") or 0))
     if last_err:
         raise last_err
 

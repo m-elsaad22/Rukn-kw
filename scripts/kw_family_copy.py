@@ -3,12 +3,14 @@ from __future__ import annotations
 
 from html import escape
 
+from kw_dna import uses_water
+
 
 def _e(s: str) -> str:
     return escape(str(s))
 
 
-def family_sections(family: str, noun: str, city: dict, spec: dict, areas, outline: int, seed: int) -> list[str]:
+def family_sections(family: str, noun: str, city: dict, spec: dict, areas, outline: int, seed: int, slug: str = "") -> list[str]:
     a0, a1, a2 = (areas + [city["name"], city["name"], city["name"]])[:3]
     tools = "، ".join(spec["tools"])
     types = "، ".join(spec["types"])
@@ -32,6 +34,7 @@ def family_sections(family: str, noun: str, city: dict, spec: dict, areas, outli
         audience=audience,
         outline=outline,
         seed=seed,
+        slug=slug,
     )
 
 
@@ -71,7 +74,7 @@ def _cleaning(**k):
         _p(
             hs[2],
             f"الرخام والستانلس والخشب لا تُعامل بمنظف واحد. الخطأ الشائع: {k['mistakes'][0]}. والثاني: {k['mistakes'][1]}.",
-            f"{c['water']} هذا يظهر أثناء الشطف في الحمام والمطبخ أكثر مما يظهر في المجلس.",
+            f"{c['buildings']} الشطف يُضبط حسب الخامة: رخام، خشب، أو قماش، لا بضغط واحد لكل البيت.",
             f"مسارات شائعة داخل المعاينة: {k['types']}. لا ننفّذها كلها في زيارة واحدة إلا إذا كُتب ذلك.",
         ),
         _p(
@@ -203,7 +206,7 @@ def _garden(**k):
         _p(
             f"التصريف والوزن على السطح أو الحوش",
             f"حديقة السطح وزن وعزل أولاً. الحوش ميول حتى لا يركد الماء قرب البيت. الأدوات: {k['tools']}.",
-            f"{c['water']} إن وُجدت مضخة ري، نفحص الضغط قبل توزيع النقاط.",
+            f"إن وُجدت شبكة ري نفحص توزيع النقاط والتصريف قبل الشكل النهائي. {c['climate']}",
         ),
         _p(
             f"صيانة {n} بعد التنفيذ",
@@ -380,7 +383,11 @@ def _elec(**k):
         _p(
             f"السباكة والكهرباء لا يُخلطان في نفس الخطوة",
             f"إن اجتمع ماء وكهرباء نؤمّن أولاً. الخطأ: {k['mistakes'][0]}. ثم {k['mistakes'][1]}.",
-            f"{c['water']} ضعف الضغط قد يُشخَّص خطأ على أنه سخان تالف.",
+            (
+                f"{c['water']} ضعف الضغط قد يُشخَّص خطأ على أنه سخان تالف."
+                if uses_water("elec", k.get("slug") or "")
+                else f"{c['buildings']} اللوحة والحمل يظهران قبل إضافة فيش أو جهاز جديد."
+            ),
         ),
         _p(
             f"التأسيس مقابل الإصلاح في {c['label']}",
