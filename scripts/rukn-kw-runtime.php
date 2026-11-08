@@ -53,6 +53,7 @@ function rukn_kw_head_min()
   echo '<link rel="alternate" hreflang="x-default" href="' . esc_url($pairs[0]) . '">' . "\n";
  }
  echo '<style id="rukn-kw-hide-tel">a[href^="tel:"]{display:none!important}</style>' . "\n";
+ echo '<style id="rukn-kw-home-fix">.acard:has(a[href*="/city/salmiya/"]),.acard:has(a[href*="/city/fintas/"]){display:none!important}</style>' . "\n";
 }
 
 function rukn_kw_hreflang_pair($path)
@@ -217,6 +218,54 @@ function rukn_kw_buffer_glue_cb($html)
  $html = str_replace('"taxRate":5', '"taxRate":0', $html);
  $html = preg_replace('~href="tel:\+971[^"]*"~', 'href="https://wa.me/971586634710"', $html);
  $html = preg_replace('~"telephone"\s*:\s*"\+971[^"]*"~', '"telephone":""', $html);
+ $html = str_replace('class="uae-svg"', 'class="kw-svg"', $html);
+ $html = str_replace("class='uae-svg'", "class='kw-svg'", $html);
+ $html = str_replace('.uae-svg', '.kw-svg', $html);
+ $html = str_replace(
+  '<svg class="kw-svg" viewBox="0 0 300 220" aria-hidden="true"><path d="M40,70 L90,40 L150,30 L210,45 L260,55 L270,90 L250,130 L235,175 L180,195 L120,185 L70,160 L45,120 Z"/></svg>',
+  '<svg class="kw-svg" viewBox="0 0 300 220" aria-hidden="true"><path d="M52 78 L162 44 L196 50 L208 78 L172 94 C164 108 166 122 186 132 L230 152 L214 196 L160 208 L88 190 L48 150 L42 110 Z"/></svg>',
+  $html
+ );
+ $html = str_replace('<b data-count="16">0</b><small>خدمة</small>', '<b data-count="228">0</b><small>خدمة</small>', $html);
+ $html = str_replace('<b data-count="8">0</b><small>مدن تغطية</small>', '<b data-count="6">0</b><small>محافظات</small>', $html);
+ $html = str_replace('<div class="num" data-count="16">0</div><div class="lbl">خدمة</div>', '<div class="num" data-count="228">0</div><div class="lbl">خدمة</div>', $html);
+ $html = str_replace('<div class="num" data-count="1248">0</div><div class="lbl">دليل خدمات</div>', '<div class="num" data-count="1368">0</div><div class="lbl">دليل خدمات</div>', $html);
+ $html = str_replace('16 خدمة منزلية', '228 خدمة في الدليل', $html);
+ $html = str_replace('alt="16 خدمة"', 'alt="228 خدمة"', $html);
+ $html = str_replace('>16 خدمة</div>', '>228 خدمة</div>', $html);
+ $html = str_replace('8 مدن', '6 محافظات', $html);
+ $html = str_replace('تغطية 8 مدينة', 'تغطية 6 محافظات', $html);
+ $html = str_replace('> 8 مدينة</span>', '> 6 محافظات</span>', $html);
+ $html = str_replace('8 مدينة', '6 محافظات', $html);
+ $html = str_replace('16 خدمة', '228 خدمة', $html);
+ $html = str_replace('نغطي مدينة الكويت، حولي، الفروانية، الأحمدي، الجهراء، مبارك الكبير، السالمية، الفنطاس.', 'نغطي ست محافظات: العاصمة، حولي، الفروانية، الأحمدي، الجهراء، ومبارك الكبير. السالمية ضمن حولي، والفنطاس ضمن الأحمدي.', $html);
+ $html = str_replace('نعم، ويختلف حسب نوع الخدمة والخامة المستخدمة — ويُوضَّح لك مكتوباً في عرض السعر قبل البدء.', 'لا نضع ضماناً عاماً لكل الأعمال. أي التزام يُكتب في عرض السعر بعد المعاينة حسب نوع العمل والخامة.', $html);
+ $html = str_replace(
+  '<p>ركن التطور منصة الخدمات المنزلية المتكاملة الرائدة في تقديم خدمات، كشف تسربات المياه💧🕵️‍♂️عزل الأسطح🏠المسابح🏊‍♂️ التشطيبات🧱الديكورات🎨صيانة عامة🛠️السباكة🚿الكهرباء💡الأجهزة الكهربائية🔌تنسيق الحدائق🌴التنظيف🧼مكافحة الحشرات🐜وكل ما تحتاجه لراحة منزلك أو منشأتك.</p>',
+  '<p>ركن التطور يقدم خدمات منزلية داخل محافظات الكويت الست: كشف تسربات، عزل، صيانة، سباكة، كهرباء، تكييف، تنظيف، مكافحة حشرات، حدائق، مسابح وتشطيب. التسعير بالدينار الكويتي بعد المعاينة.</p>',
+  $html
+ );
+ $html = str_replace(
+  '<p>Rukn Eltatawer منصة integrated home services الرائدة في تقديم خدمات، Water leak detection💧🕵️‍♂️Roof insulation🏠المسابح🏊‍♂️ التشطيبات🧱الديكورات🎨General maintenance🛠️plumbing🚿الكهرباء💡الأجهزة الكهربائية🔌Landscaping🌴cleaning🧼Pest control🐜and everything you need for a comfortable home or facility.</p>',
+  '<p>Rukn El Tatawer provides home services across Kuwait’s six governorates: leak detection, insulation, maintenance, plumbing, electrics, AC, cleaning, pest control, gardens, pools and finishing. Quotes are in Kuwaiti dinar after inspection.</p>',
+  $html
+ );
+ $html = str_replace("t.textContent='Rukn Eltatawer الكويت'", "t.textContent='Rukn El Tatawer Kuwait'", $html);
+ $html = str_replace('<a href="https://wa.me/971586634710"></a>', '<a href="https://wa.me/971586634710">WhatsApp</a>', $html);
+ $html = preg_replace(
+  '~<div class="acard rv" data-acard-toggle><div class="ah"><img [^>]*alt="(?:السالمية|الفنطاس)"[^>]*>.*?<div class="svcs">.*?</div></div>~s',
+  '',
+  $html
+ );
+ $path = (string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
+ if (preg_match('#/kw/en(/|$)#', $path)) {
+  $html = str_replace('جدول المحتويات', 'Contents', $html);
+  $html = str_replace('احجز خدمتك الآن ⭐', 'Book your visit', $html);
+  $html = str_replace('أحجز خدمتك عن طريق واتساب لتحصل على خصم 30%', 'Message WhatsApp for an inspection and a written quote in KWD', $html);
+  $html = str_replace('>الواتساب<', '>WhatsApp<', $html);
+  $html = str_replace('Rukn Eltatawer الكويت', 'Rukn El Tatawer Kuwait', $html);
+  $html = str_replace('الكويت 🇰🇼', 'Kuwait', $html);
+ }
  $canon = rukn_kw_canonical('');
  $html = preg_replace(
   '~<link[^>]+rel=["\']canonical["\'][^>]*>~i',
