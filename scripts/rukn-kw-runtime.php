@@ -226,18 +226,21 @@ function rukn_kw_buffer_glue_cb($html)
   '<svg class="kw-svg" viewBox="0 0 300 220" aria-hidden="true"><path d="M52 78 L162 44 L196 50 L208 78 L172 94 C164 108 166 122 186 132 L230 152 L214 196 L160 208 L88 190 L48 150 L42 110 Z"/></svg>',
   $html
  );
- $html = str_replace('<b data-count="16">0</b><small>خدمة</small>', '<b data-count="228">0</b><small>خدمة</small>', $html);
+ $html = str_replace('<b data-count="16">0</b><small>خدمة</small>', '<b data-count="240">0</b><small>خدمة</small>', $html);
  $html = str_replace('<b data-count="8">0</b><small>مدن تغطية</small>', '<b data-count="6">0</b><small>محافظات</small>', $html);
- $html = str_replace('<div class="num" data-count="16">0</div><div class="lbl">خدمة</div>', '<div class="num" data-count="228">0</div><div class="lbl">خدمة</div>', $html);
- $html = str_replace('<div class="num" data-count="1248">0</div><div class="lbl">دليل خدمات</div>', '<div class="num" data-count="1368">0</div><div class="lbl">دليل خدمات</div>', $html);
- $html = str_replace('16 خدمة منزلية', '228 خدمة في الدليل', $html);
- $html = str_replace('alt="16 خدمة"', 'alt="228 خدمة"', $html);
- $html = str_replace('>16 خدمة</div>', '>228 خدمة</div>', $html);
+ $html = str_replace('<div class="num" data-count="16">0</div><div class="lbl">خدمة</div>', '<div class="num" data-count="240">0</div><div class="lbl">خدمة</div>', $html);
+ $html = str_replace('<div class="num" data-count="1248">0</div><div class="lbl">دليل خدمات</div>', '<div class="num" data-count="1440">0</div><div class="lbl">دليل خدمات</div>', $html);
+ $html = str_replace('16 خدمة منزلية', '240 خدمة في الدليل', $html);
+ $html = str_replace('alt="16 خدمة"', 'alt="240 خدمة"', $html);
+ $html = str_replace('>16 خدمة</div>', '>240 خدمة</div>', $html);
  $html = str_replace('8 مدن', '6 محافظات', $html);
  $html = str_replace('تغطية 8 مدينة', 'تغطية 6 محافظات', $html);
  $html = str_replace('> 8 مدينة</span>', '> 6 محافظات</span>', $html);
  $html = str_replace('8 مدينة', '6 محافظات', $html);
- $html = str_replace('16 خدمة', '228 خدمة', $html);
+ $html = str_replace('16 خدمة', '240 خدمة', $html);
+ $html = str_replace('228 خدمة', '240 خدمة', $html);
+ $html = str_replace('data-count="228"', 'data-count="240"', $html);
+ $html = str_replace('data-count="1368"', 'data-count="1440"', $html);
  $html = str_replace('نغطي مدينة الكويت، حولي، الفروانية، الأحمدي، الجهراء، مبارك الكبير، السالمية، الفنطاس.', 'نغطي ست محافظات: العاصمة، حولي، الفروانية، الأحمدي، الجهراء، ومبارك الكبير. السالمية ضمن حولي، والفنطاس ضمن الأحمدي.', $html);
  $html = str_replace('نعم، ويختلف حسب نوع الخدمة والخامة المستخدمة — ويُوضَّح لك مكتوباً في عرض السعر قبل البدء.', 'لا نضع ضماناً عاماً لكل الأعمال. أي التزام يُكتب في عرض السعر بعد المعاينة حسب نوع العمل والخامة.', $html);
  $html = str_replace(

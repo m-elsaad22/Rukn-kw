@@ -46,6 +46,10 @@ def main():
         ("indoor-moving-farwaniya", "شركة نقل أثاث داخلي بالفروانية"),
         ("locksmith-kuwait", "فني فتح الأبواب وتغيير الأقفال بالكويت"),
         ("home-cleaning-hawalli", "شركة تنظيف منازل بحولي"),
+        ("cctv-installation-hawalli", "شركة تركيب كاميرات المراقبة بحولي"),
+        ("sewage-tanker-al-jahra", "وايت صرف صحي وشفط مجاري بالجهراء"),
+        ("wood-polishing-kuwait", "شركة تلميع الأخشاب والأبواب بالكويت"),
+        ("dishwasher-installation-farwaniya", "شركة تركيب غسالات الصحون بالفروانية"),
     ]
     by_slug = {p["post_name"]: p for p in posts}
     built = {}
@@ -80,6 +84,8 @@ def main():
         ("split-ac-maintenance-hawalli", "home-cleaning-hawalli"),
         ("landscaping-al-jahra", "indoor-moving-farwaniya"),
         ("locksmith-kuwait", "water-leak-detection-kuwait"),
+        ("cctv-installation-hawalli", "wood-polishing-kuwait"),
+        ("sewage-tanker-al-jahra", "dishwasher-installation-farwaniya"),
     ]
     for a, b in pairs:
         j = jaccard(shingles(built[a]["html"]), shingles(built[b]["html"]))

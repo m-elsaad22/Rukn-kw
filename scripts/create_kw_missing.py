@@ -18,26 +18,18 @@ ROOT = Path(__file__).resolve().parent
 CATALOG_PATH = ROOT / "kw_posts_catalog.json"
 
 MISSING = [
-    ("intercom", "شركة"),
-    ("locksmith", "فني"),
-    ("fire-alarm", "شركة"),
-    ("generator-installation", "شركة"),
-    ("ups-installation", "شركة"),
-    ("smart-home", "شركة"),
-    ("home-network", "شركة"),
-    ("water-tanker-delivery", "خدمة"),
-    ("manhole-cleaning", "شركة"),
-    ("car-parking-shades", "شركة"),
-    ("tent-diwaniya", "شركة"),
-    ("furniture-upholstery", "فني"),
-    ("curtain-installation", "شركة"),
-    ("pool-construction", "شركة"),
-    ("elevator-installation", "شركة"),
-    ("office-relocation", "شركة"),
-    ("epoxy-flooring", "شركة"),
-    ("roller-shutters", "شركة"),
-    ("garage-doors", "شركة"),
-    ("water-softener", "شركة"),
+    ("cctv-installation", "شركة"),
+    ("security-doors", "شركة"),
+    ("tv-wall-mount", "شركة"),
+    ("glass-shower", "شركة"),
+    ("stair-railing", "شركة"),
+    ("facade-cladding", "شركة"),
+    ("tile-grout", "شركة"),
+    ("dishwasher-installation", "شركة"),
+    ("furniture-repair", "فني"),
+    ("wood-polishing", "شركة"),
+    ("sewage-tanker", "خدمة"),
+    ("water-tank-installation", "شركة"),
 ]
 
 
@@ -55,6 +47,7 @@ def main():
     created = []
     skipped = []
     failed = []
+    pending_meta = []
     for slug, prefix in MISSING:
         spec = FACTS.get(slug)
         if not spec:
@@ -93,7 +86,10 @@ def main():
                     "rank_math_focus_keyword": art["rank_math_focus_keyword"],
                     "meta": art["meta"],
                 }
-                apply_meta_batch([item])
+                pending_meta.append(item)
+                if len(pending_meta) >= 4:
+                    apply_meta_batch(pending_meta, chunk=4)
+                    pending_meta = []
                 cat[slug][city_key] = {"id": pid, "title": title, "slug": post_name}
                 created.append({"id": pid, "slug": post_name, "title": title, "words": art["word_count_hint"]})
                 print(f"NEW {pid} {post_name} words={art['word_count_hint']}", flush=True)
@@ -102,6 +98,9 @@ def main():
                 print(f"FAIL {post_name}: {e}", flush=True)
                 time.sleep(0.5)
 
+    if pending_meta:
+        apply_meta_batch(pending_meta, chunk=4)
+        pending_meta = []
     # refresh catalog from created+existing
     if created:
         rows = json.loads(CATALOG_PATH.read_text())["results"]
