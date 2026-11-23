@@ -108,6 +108,7 @@ function rukn_kw_en_map()
   'privacy-policy' => 3825,
   'privacy-policy-2' => 3825,
   'service' => 3819,
+  'services' => 3827,
   'service/privacy-policy' => 3825,
   'services/water-leak-detection' => 3829,
   'services/roof-insulation' => 3831,
@@ -148,6 +149,36 @@ function rukn_kw_parse_en($wp)
  $map = rukn_kw_en_map();
  if (isset($map[$rel])) {
   $wp->query_vars = array('page_id' => (int) $map[$rel]);
+ }
+}
+
+add_action('wp_footer', 'rukn_kw_en_services_dir', 30);
+function rukn_kw_en_services_dir()
+{
+ $path = (string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
+ if (!preg_match('#/kw/en/services/?$#', $path)) {
+  return;
+ }
+ $post = get_post(3827);
+ if (!$post || $post->post_status !== 'publish') {
+  return;
+ }
+ echo '<div id="rukn-en-dir" class="rukn-wrap" style="max-width:980px;margin:28px auto;padding:18px;background:#fff;color:#0A1A33;border-radius:16px">';
+ echo apply_filters('the_content', $post->post_content);
+ echo '</div>';
+}
+
+add_action('template_redirect', 'rukn_kw_redirect_districts', 0);
+function rukn_kw_redirect_districts()
+{
+ $path = (string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
+ if (preg_match('#/kw/city/salmiya/?$#', $path)) {
+  wp_safe_redirect(home_url('/city/hawalli/'), 301);
+  exit;
+ }
+ if (preg_match('#/kw/city/fintas/?$#', $path)) {
+  wp_safe_redirect(home_url('/city/al-ahmadi/'), 301);
+  exit;
  }
 }
 
@@ -226,21 +257,24 @@ function rukn_kw_buffer_glue_cb($html)
   '<svg class="kw-svg" viewBox="0 0 300 220" aria-hidden="true"><path d="M52 78 L162 44 L196 50 L208 78 L172 94 C164 108 166 122 186 132 L230 152 L214 196 L160 208 L88 190 L48 150 L42 110 Z"/></svg>',
   $html
  );
- $html = str_replace('<b data-count="16">0</b><small>خدمة</small>', '<b data-count="240">0</b><small>خدمة</small>', $html);
+ $html = str_replace('<b data-count="16">0</b><small>خدمة</small>', '<b data-count="236">0</b><small>خدمة</small>', $html);
  $html = str_replace('<b data-count="8">0</b><small>مدن تغطية</small>', '<b data-count="6">0</b><small>محافظات</small>', $html);
- $html = str_replace('<div class="num" data-count="16">0</div><div class="lbl">خدمة</div>', '<div class="num" data-count="240">0</div><div class="lbl">خدمة</div>', $html);
- $html = str_replace('<div class="num" data-count="1248">0</div><div class="lbl">دليل خدمات</div>', '<div class="num" data-count="1440">0</div><div class="lbl">دليل خدمات</div>', $html);
- $html = str_replace('16 خدمة منزلية', '240 خدمة في الدليل', $html);
- $html = str_replace('alt="16 خدمة"', 'alt="240 خدمة"', $html);
- $html = str_replace('>16 خدمة</div>', '>240 خدمة</div>', $html);
+ $html = str_replace('<div class="num" data-count="16">0</div><div class="lbl">خدمة</div>', '<div class="num" data-count="236">0</div><div class="lbl">خدمة</div>', $html);
+ $html = str_replace('<div class="num" data-count="1248">0</div><div class="lbl">دليل خدمات</div>', '<div class="num" data-count="1416">0</div><div class="lbl">دليل خدمات</div>', $html);
+ $html = str_replace('16 خدمة منزلية', '236 خدمة في الدليل', $html);
+ $html = str_replace('alt="16 خدمة"', 'alt="236 خدمة"', $html);
+ $html = str_replace('>16 خدمة</div>', '>236 خدمة</div>', $html);
  $html = str_replace('8 مدن', '6 محافظات', $html);
  $html = str_replace('تغطية 8 مدينة', 'تغطية 6 محافظات', $html);
  $html = str_replace('> 8 مدينة</span>', '> 6 محافظات</span>', $html);
  $html = str_replace('8 مدينة', '6 محافظات', $html);
- $html = str_replace('16 خدمة', '240 خدمة', $html);
- $html = str_replace('228 خدمة', '240 خدمة', $html);
- $html = str_replace('data-count="228"', 'data-count="240"', $html);
- $html = str_replace('data-count="1368"', 'data-count="1440"', $html);
+ $html = str_replace('16 خدمة', '236 خدمة', $html);
+ $html = str_replace('228 خدمة', '236 خدمة', $html);
+ $html = str_replace('240 خدمة', '236 خدمة', $html);
+ $html = str_replace('data-count="228"', 'data-count="236"', $html);
+ $html = str_replace('data-count="240"', 'data-count="236"', $html);
+ $html = str_replace('data-count="1368"', 'data-count="1416"', $html);
+ $html = str_replace('data-count="1440"', 'data-count="1416"', $html);
  $html = str_replace('نغطي مدينة الكويت، حولي، الفروانية، الأحمدي، الجهراء، مبارك الكبير، السالمية، الفنطاس.', 'نغطي ست محافظات: العاصمة، حولي، الفروانية، الأحمدي، الجهراء، ومبارك الكبير. السالمية ضمن حولي، والفنطاس ضمن الأحمدي.', $html);
  $html = str_replace('نعم، ويختلف حسب نوع الخدمة والخامة المستخدمة — ويُوضَّح لك مكتوباً في عرض السعر قبل البدء.', 'لا نضع ضماناً عاماً لكل الأعمال. أي التزام يُكتب في عرض السعر بعد المعاينة حسب نوع العمل والخامة.', $html);
  $html = str_replace(
